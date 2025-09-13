@@ -28,6 +28,11 @@ func (r *Router) Init() *Router {
 		w.Write([]byte("Hello, World!"))
 	})
 
+	r.mux.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Hello, World!"))
+	})
+
 	return r
 }
 
