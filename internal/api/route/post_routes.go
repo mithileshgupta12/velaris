@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -78,5 +79,34 @@ func PostRoutes(r *chi.Mux) {
 				log.Println(err.Error())
 			}
 		})
+	})
+
+	r.Delete("/{postId}", func(w http.ResponseWriter, r *http.Request) {
+		postIdParam := chi.URLParam(r, "postId")
+
+		w.Header().Set("Content-Type", "application/json")
+
+		postId, err := strconv.Atoi(postIdParam)
+		if err != nil {
+			http.Error(w, "Post id is invalid", http.StatusBadRequest)
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		postFound := false
+		for i, v := range postStore {
+			if v.ID == postId {
+				postStore = append(postStore[:i], postStore[i+1:]...)
+				postFound = true
+				break
+			}
+		}
+
+		if !postFound {
+			http.Error(w, "No post found", http.StatusNotFound)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
