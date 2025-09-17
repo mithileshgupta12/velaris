@@ -81,6 +81,10 @@ func PostRoutes(r *chi.Mux) {
 		})
 	})
 
+	r.Put("/{postId}", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+
 	r.Delete("/{postId}", func(w http.ResponseWriter, r *http.Request) {
 		postIdParam := chi.URLParam(r, "postId")
 
