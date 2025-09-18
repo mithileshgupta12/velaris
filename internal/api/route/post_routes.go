@@ -24,7 +24,12 @@ type storePostRequest struct {
 	Content string `json:"content"`
 }
 
-var postStore = []*Post{}
+type updatePostRequest struct {
+	Title   string `json:"title"`
+	Content string `json:"content"`
+}
+
+var postStore = map[int]*Post{}
 
 var mu = &sync.RWMutex{}
 
@@ -63,14 +68,15 @@ func PostRoutes(r *chi.Mux) {
 			}
 
 			mu.Lock()
+			postId := len(postStore) + 1
 			post := &Post{
-				ID:        len(postStore) + 1,
+				ID:        postId,
 				Title:     req.Title,
 				Content:   req.Content,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}
-			postStore = append(postStore, post)
+			postStore[postId] = post
 			mu.Unlock()
 
 			w.WriteHeader(http.StatusCreated)
@@ -79,38 +85,73 @@ func PostRoutes(r *chi.Mux) {
 				log.Println(err.Error())
 			}
 		})
-	})
 
-	r.Put("/{postId}", func(w http.ResponseWriter, r *http.Request) {
+		r.Put("/{postId}", func(w http.ResponseWriter, r *http.Request) {
+			postIdParam := chi.URLParam(r, "postId")
 
-	})
+			w.Header().Set("Content-Type", "application/json")
 
-	r.Delete("/{postId}", func(w http.ResponseWriter, r *http.Request) {
-		postIdParam := chi.URLParam(r, "postId")
-
-		w.Header().Set("Content-Type", "application/json")
-
-		postId, err := strconv.Atoi(postIdParam)
-		if err != nil {
-			http.Error(w, "Post id is invalid", http.StatusBadRequest)
-			return
-		}
-		mu.Lock()
-		defer mu.Unlock()
-		postFound := false
-		for i, v := range postStore {
-			if v.ID == postId {
-				postStore = append(postStore[:i], postStore[i+1:]...)
-				postFound = true
-				break
+			postId, err := strconv.Atoi(postIdParam)
+			if err != nil {
+				http.Error(w, "Post id is invalid", http.StatusBadRequest)
+				return
 			}
-		}
 
-		if !postFound {
-			http.Error(w, "No post found", http.StatusNotFound)
-			return
-		}
+			var req *updatePostRequest
 
-		w.WriteHeader(http.StatusNoContent)
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				log.Println(err.Error())
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+
+			if req.Title == "" {
+				http.Error(w, "title is a required field", http.StatusBadRequest)
+				return
+			}
+
+			if req.Content == "" {
+				http.Error(w, "content is a required field", http.StatusBadRequest)
+				return
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			post, ok := postStore[postId]
+			if !ok {
+				http.Error(w, "No post found", http.StatusNotFound)
+				return
+			}
+			post.Title = req.Title
+			post.Content = req.Content
+			post.UpdatedAt = time.Now()
+			postStore[postId] = post
+
+			if err := json.NewEncoder(w).Encode(post); err != nil {
+				log.Println(err.Error())
+			}
+		})
+
+		r.Delete("/{postId}", func(w http.ResponseWriter, r *http.Request) {
+			postIdParam := chi.URLParam(r, "postId")
+
+			w.Header().Set("Content-Type", "application/json")
+
+			postId, err := strconv.Atoi(postIdParam)
+			if err != nil {
+				http.Error(w, "Post id is invalid", http.StatusBadRequest)
+				return
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			_, ok := postStore[postId]
+			if !ok {
+				http.Error(w, "No post found", http.StatusNotFound)
+				return
+			}
+			delete(postStore, postId)
+
+			w.WriteHeader(http.StatusNoContent)
+		})
 	})
 }
