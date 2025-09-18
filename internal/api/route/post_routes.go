@@ -1,9 +1,3 @@
-// @title Posts API
-// @version 1.0
-// @description A simple blog posts API
-// @host localhost:8000
-// @BasePath /
-
 package route
 
 import (
@@ -16,7 +10,6 @@ import (
 	"time"
 )
 
-// Post represents a blog post
 type Post struct {
 	ID        int       `json:"id" example:"1"`
 	Title     string    `json:"title" example:"My Blog Post"`
@@ -25,13 +18,11 @@ type Post struct {
 	UpdatedAt time.Time `json:"updated_at" example:"2025-01-15T10:30:00Z"`
 }
 
-// storePostRequest represents the request body for creating a post
 type storePostRequest struct {
 	Title   string `json:"title" example:"My New Post" binding:"required"`
 	Content string `json:"content" example:"Content of the new post" binding:"required"`
 }
 
-// updatePostRequest represents the request body for updating a post
 type updatePostRequest struct {
 	Title   string `json:"title" example:"Updated Post Title" binding:"required"`
 	Content string `json:"content" example:"Updated post content" binding:"required"`
@@ -42,12 +33,6 @@ var mu = &sync.RWMutex{}
 
 func PostRoutes(r *chi.Mux) {
 	r.Route("/posts", func(r chi.Router) {
-		// @Summary Get all posts
-		// @Description Retrieve all posts from the store
-		// @Tags posts
-		// @Produce json
-		// @Success 200 {object} map[string]Post "Posts retrieved successfully"
-		// @Router /posts [get]
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			mu.RLock()
 			defer mu.RUnlock()
@@ -57,16 +42,6 @@ func PostRoutes(r *chi.Mux) {
 			}
 		})
 
-		// @Summary Create a new post
-		// @Description Create a new blog post
-		// @Tags posts
-		// @Accept json
-		// @Produce json
-		// @Param post body storePostRequest true "Post data"
-		// @Success 201 {object} Post "Post created successfully"
-		// @Failure 400 {string} string "Bad Request - missing required fields"
-		// @Failure 500 {string} string "Internal Server Error"
-		// @Router /posts [post]
 		r.Post("/", func(w http.ResponseWriter, r *http.Request) {
 			var req *storePostRequest
 			w.Header().Set("Content-Type", "application/json")
@@ -100,18 +75,6 @@ func PostRoutes(r *chi.Mux) {
 			}
 		})
 
-		// @Summary Update a post
-		// @Description Update an existing post by ID
-		// @Tags posts
-		// @Accept json
-		// @Produce json
-		// @Param postId path int true "Post ID"
-		// @Param post body updatePostRequest true "Updated post data"
-		// @Success 200 {object} Post "Post updated successfully"
-		// @Failure 400 {string} string "Bad Request - invalid ID or missing fields"
-		// @Failure 404 {string} string "Post not found"
-		// @Failure 500 {string} string "Internal Server Error"
-		// @Router /posts/{postId} [put]
 		r.Put("/{postId}", func(w http.ResponseWriter, r *http.Request) {
 			postIdParam := chi.URLParam(r, "postId")
 			w.Header().Set("Content-Type", "application/json")
@@ -150,14 +113,6 @@ func PostRoutes(r *chi.Mux) {
 			}
 		})
 
-		// @Summary Delete a post
-		// @Description Delete a post by ID
-		// @Tags posts
-		// @Param postId path int true "Post ID"
-		// @Success 204 "Post deleted successfully"
-		// @Failure 400 {string} string "Bad Request - invalid ID"
-		// @Failure 404 {string} string "Post not found"
-		// @Router /posts/{postId} [delete]
 		r.Delete("/{postId}", func(w http.ResponseWriter, r *http.Request) {
 			postIdParam := chi.URLParam(r, "postId")
 			w.Header().Set("Content-Type", "application/json")
