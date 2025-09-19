@@ -2,12 +2,13 @@ package route
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type Post struct {
