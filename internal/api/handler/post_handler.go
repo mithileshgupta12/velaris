@@ -12,24 +12,24 @@ import (
 )
 
 type Post struct {
-	ID        int       `json:"id" example:"1"`
-	Title     string    `json:"title" example:"My Blog Post"`
-	Content   string    `json:"content" example:"This is the content of my blog post"`
-	CreatedAt time.Time `json:"created_at" example:"2025-01-15T10:30:00Z"`
-	UpdatedAt time.Time `json:"updated_at" example:"2025-01-15T10:30:00Z"`
+	ID        int       `json:"id"`
+	Title     string    `json:"title"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 var postStore = map[int]*Post{}
 var mu = &sync.RWMutex{}
 
 type storePostRequest struct {
-	Title   string `json:"title" example:"My New Post" binding:"required"`
-	Content string `json:"content" example:"Content of the new post" binding:"required"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 type updatePostRequest struct {
-	Title   string `json:"title" example:"Updated Post Title" binding:"required"`
-	Content string `json:"content" example:"Updated post content" binding:"required"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 type PostHandler struct{}
