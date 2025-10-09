@@ -8,5 +8,6 @@ import (
 
 func main() {
 	r := route.NewRouter()
+	r.RegisterRoutes()
 	log.Fatal(r.Serve(8000))
 }
