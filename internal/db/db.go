@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/mithileshgupta12/velaris/internal/config"
@@ -23,6 +24,11 @@ func NewDB(dbFlags *config.DBFlags) (*DB, error) {
 		return nil, err
 	}
 
+	conn.SetMaxOpenConns(25)
+	conn.SetMaxIdleConns(5)
+	conn.SetConnMaxLifetime(15 * time.Minute)
+	conn.SetConnMaxIdleTime(5 * time.Minute)
+
 	return &DB{
 		conn,
 	}, nil
@@ -36,7 +42,6 @@ func (db *DB) Ping() error {
 	if err := db.conn.Ping(); err != nil {
 		return err
 	}
-
 	return nil
 }
 
