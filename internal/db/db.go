@@ -1,16 +1,16 @@
 package db
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
-	"time"
 
-	_ "github.com/jackc/pgx/stdlib"
+	"github.com/jackc/pgx/v5"
 	"github.com/mithileshgupta12/velaris/internal/config"
+	"github.com/mithileshgupta12/velaris/internal/db/repository"
 )
 
 type DB struct {
-	conn *sql.DB
+	conn *pgx.Conn
 }
 
 func NewDB(dbFlags *config.DBFlags) (*DB, error) {
@@ -19,32 +19,31 @@ func NewDB(dbFlags *config.DBFlags) (*DB, error) {
 		dbFlags.Host, dbFlags.PORT, dbFlags.User, dbFlags.Password, dbFlags.Name, dbFlags.SSLMode,
 	)
 
-	conn, err := sql.Open("pgx", connStr)
+	conn, err := pgx.Connect(context.Background(), connStr)
 	if err != nil {
 		return nil, err
 	}
-
-	conn.SetMaxOpenConns(25)
-	conn.SetMaxIdleConns(5)
-	conn.SetConnMaxLifetime(15 * time.Minute)
-	conn.SetConnMaxIdleTime(5 * time.Minute)
 
 	return &DB{
 		conn,
 	}, nil
 }
 
-func (db *DB) RegisterRepositories() {
-	//
+func (db *DB) RegisterRepositories() *repository.Queries {
+	return repository.New(db.conn)
+}
+
+func (db *DB) GetConn() *pgx.Conn {
+	return db.conn
 }
 
 func (db *DB) Ping() error {
-	if err := db.conn.Ping(); err != nil {
+	if err := db.conn.Ping(context.Background()); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (db *DB) Close() error {
-	return db.conn.Close()
+	return db.conn.Close(context.Background())
 }
