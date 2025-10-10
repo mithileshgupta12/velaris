@@ -12,7 +12,7 @@ type DB struct {
 	conn *sql.DB
 }
 
-func NewDB(dbFlags config.DBFlags) (*DB, error) {
+func NewDB(dbFlags *config.DBFlags) (*DB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		dbFlags.Host, dbFlags.PORT, dbFlags.User, dbFlags.Password, dbFlags.Name, dbFlags.SSLMode,
