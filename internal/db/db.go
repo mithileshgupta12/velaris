@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -14,31 +15,44 @@ type DB struct {
 	pool *pgxpool.Pool
 }
 
+var (
+	instance    *DB
+	once        sync.Once
+	instanceErr error
+)
+
 func NewDB(dbFlags *config.DBFlags) (*DB, error) {
-	connStr := fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		dbFlags.Host, dbFlags.PORT, dbFlags.User, dbFlags.Password, dbFlags.Name, dbFlags.SSLMode,
-	)
+	once.Do(func() {
+		connStr := fmt.Sprintf(
+			"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+			dbFlags.Host, dbFlags.PORT, dbFlags.User, dbFlags.Password, dbFlags.Name, dbFlags.SSLMode,
+		)
 
-	config, err := pgxpool.ParseConfig(connStr)
-	if err != nil {
-		return nil, err
-	}
+		poolConfig, err := pgxpool.ParseConfig(connStr)
+		if err != nil {
+			instance = nil
+			instanceErr = err
+			return
+		}
 
-	config.MaxConns = 25
-	config.MinConns = 5
-	config.MaxConnLifetime = time.Hour
-	config.MaxConnIdleTime = 30 * time.Minute
-	config.HealthCheckPeriod = time.Minute
+		poolConfig.MaxConns = 25
+		poolConfig.MinConns = 5
+		poolConfig.MaxConnLifetime = time.Hour
+		poolConfig.MaxConnIdleTime = 30 * time.Minute
+		poolConfig.HealthCheckPeriod = time.Minute
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, err
-	}
+		pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
+		if err != nil {
+			instance = nil
+			instanceErr = err
+			return
+		}
 
-	return &DB{
-		pool,
-	}, nil
+		instance = &DB{pool}
+		instanceErr = nil
+	})
+
+	return instance, instanceErr
 }
 
 func (db *DB) RegisterRepositories() *repository.Queries {
@@ -49,13 +63,12 @@ func (db *DB) GetPool() *pgxpool.Pool {
 	return db.pool
 }
 
-func (db *DB) Ping() error {
-	if err := db.pool.Ping(context.Background()); err != nil {
-		return err
-	}
-	return nil
+func (db *DB) Ping(ctx context.Context) error {
+	return db.pool.Ping(ctx)
 }
 
 func (db *DB) Close() {
-	db.pool.Close()
+	if db.pool != nil {
+		db.pool.Close()
+	}
 }
