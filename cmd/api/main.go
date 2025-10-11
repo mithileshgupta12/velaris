@@ -21,11 +21,7 @@ func main() {
 	}
 
 	log.Println("Connection to database successful")
-	defer func() {
-		if err := db.Close(); err != nil {
-			log.Println("Failed to close database connection", err)
-		}
-	}()
+	defer db.Close()
 
 	r := route.NewRouter()
 	r.RegisterRoutes()

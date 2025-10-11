@@ -3,14 +3,15 @@ package db
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/mithileshgupta12/velaris/internal/config"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 )
 
 type DB struct {
-	conn *pgx.Conn
+	pool *pgxpool.Pool
 }
 
 func NewDB(dbFlags *config.DBFlags) (*DB, error) {
@@ -19,31 +20,42 @@ func NewDB(dbFlags *config.DBFlags) (*DB, error) {
 		dbFlags.Host, dbFlags.PORT, dbFlags.User, dbFlags.Password, dbFlags.Name, dbFlags.SSLMode,
 	)
 
-	conn, err := pgx.Connect(context.Background(), connStr)
+	config, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		return nil, err
+	}
+
+	config.MaxConns = 25
+	config.MinConns = 5
+	config.MaxConnLifetime = time.Hour
+	config.MaxConnIdleTime = 30 * time.Minute
+	config.HealthCheckPeriod = time.Minute
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DB{
-		conn,
+		pool,
 	}, nil
 }
 
 func (db *DB) RegisterRepositories() *repository.Queries {
-	return repository.New(db.conn)
+	return repository.New(db.pool)
 }
 
-func (db *DB) GetConn() *pgx.Conn {
-	return db.conn
+func (db *DB) GetPool() *pgxpool.Pool {
+	return db.pool
 }
 
 func (db *DB) Ping() error {
-	if err := db.conn.Ping(context.Background()); err != nil {
+	if err := db.pool.Ping(context.Background()); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (db *DB) Close() error {
-	return db.conn.Close(context.Background())
+func (db *DB) Close() {
+	db.pool.Close()
 }
