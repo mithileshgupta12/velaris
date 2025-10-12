@@ -24,7 +24,7 @@ func main() {
 	log.Println("Connection to database successful")
 	defer db.Close()
 
-	r := route.NewRouter()
+	r := route.NewRouter(db.Queries)
 	r.RegisterRoutes()
 	log.Fatal(r.Serve(8000))
 }

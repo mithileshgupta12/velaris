@@ -12,7 +12,8 @@ import (
 )
 
 type DB struct {
-	pool *pgxpool.Pool
+	pool    *pgxpool.Pool
+	Queries *repository.Queries
 }
 
 var (
@@ -48,15 +49,13 @@ func NewDB(dbFlags *config.DBFlags) (*DB, error) {
 			return
 		}
 
-		instance = &DB{pool}
+		queries := repository.New(pool)
+
+		instance = &DB{pool, queries}
 		instanceErr = nil
 	})
 
 	return instance, instanceErr
-}
-
-func (db *DB) RegisterRepositories() *repository.Queries {
-	return repository.New(db.pool)
 }
 
 func (db *DB) GetPool() *pgxpool.Pool {
