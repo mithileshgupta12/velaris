@@ -12,19 +12,19 @@ import (
 func main() {
 	cfg := config.NewConfig()
 
-	db, err := db.NewDB(&cfg.DB)
+	database, err := db.NewDB(&cfg.DB)
 	if err != nil {
 		log.Fatal("Failed to connect to database", err)
 	}
 
-	if err := db.Ping(context.Background()); err != nil {
+	if err := database.Ping(context.Background()); err != nil {
 		log.Fatal("Failed to ping database", err)
 	}
 
 	log.Println("Connection to database successful")
-	defer db.Close()
+	defer database.Close()
 
-	r := route.NewRouter(db.Queries)
+	r := route.NewRouter(database)
 	r.RegisterRoutes()
 	log.Fatal(r.Serve(8000))
 }
