@@ -32,3 +32,7 @@ migrate-create:
 migrate-up:
 	@echo "Running migrations..."
 	@goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" up
+
+migrate-down:
+	@echo "Running migrations..."
+	@goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" down

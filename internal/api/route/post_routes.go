@@ -9,5 +9,6 @@ import (
 func PostRoutes(r *chi.Mux, database *db.DB) {
 	postHandler := handler.NewPostHandler(database)
 
-	r.Get("/posts/", postHandler.Index)
+	r.Get("/posts", postHandler.Index)
+	r.Post("/posts", postHandler.Store)
 }
