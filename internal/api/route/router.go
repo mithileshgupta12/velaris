@@ -27,7 +27,7 @@ func NewRouter(database *db.DB) *Router {
 }
 
 func (r *Router) RegisterRoutes() {
-	PostRoutes(r.mux, r.database)
+	BoardRoutes(r.mux, r.database)
 }
 
 func (r *Router) Serve(port int) error {
