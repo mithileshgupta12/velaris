@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
 	"github.com/mithileshgupta12/velaris/internal/db"
+	"github.com/mithileshgupta12/velaris/internal/helper"
 )
 
 type BoardHandler struct {
@@ -19,16 +19,12 @@ func NewBoardHandler(database *db.DB) *BoardHandler {
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 	boards, err := bh.database.Queries.GetAllBoards(r.Context())
 	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		log.Printf("failed to get boards: %v", err)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(boards); err != nil {
-		log.Println(err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
-	}
+	helper.JsonResponse(w, http.StatusOK, boards)
 }
 
 func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
