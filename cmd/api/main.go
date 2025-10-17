@@ -7,11 +7,11 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/api/route"
 	"github.com/mithileshgupta12/velaris/internal/config"
 	"github.com/mithileshgupta12/velaris/internal/db"
-	customLogger "github.com/mithileshgupta12/velaris/internal/pkg/logger"
+	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 func main() {
-	logger := customLogger.NewLogger()
+	lgr := logger.NewLogger()
 
 	cfg := config.NewConfig()
 
@@ -24,10 +24,10 @@ func main() {
 		log.Fatal("Failed to ping database", err)
 	}
 
-	logger.Log(customLogger.INFO, "Connection to database successful")
+	lgr.Log(logger.FormatJSON, logger.INFO, "Connection to database successful")
 	defer database.Close()
 
-	r := route.NewRouter(database)
+	r := route.NewRouter(lgr, database)
 	r.RegisterRoutes()
 	log.Fatal(r.Serve(8000))
 }

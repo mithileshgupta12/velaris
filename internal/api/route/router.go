@@ -2,20 +2,21 @@ package route
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/mithileshgupta12/velaris/internal/db"
+	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type Router struct {
+	lgr      logger.Logger
 	mux      *chi.Mux
 	database *db.DB
 }
 
-func NewRouter(database *db.DB) *Router {
+func NewRouter(lgr logger.Logger, database *db.DB) *Router {
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.RequestID)
@@ -23,7 +24,7 @@ func NewRouter(database *db.DB) *Router {
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 
-	return &Router{mux, database}
+	return &Router{lgr, mux, database}
 }
 
 func (r *Router) RegisterRoutes() {
@@ -33,6 +34,6 @@ func (r *Router) RegisterRoutes() {
 func (r *Router) Serve(port int) error {
 	addr := fmt.Sprintf(":%d", port)
 
-	log.Printf("Server started on %s", addr)
+	r.lgr.Log(logger.FormatJSON, logger.INFO, fmt.Sprintf("Server started on %s", addr))
 	return http.ListenAndServe(addr, r.mux)
 }
