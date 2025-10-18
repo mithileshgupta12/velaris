@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/mithileshgupta12/velaris/internal/api/route"
@@ -17,11 +18,11 @@ func main() {
 
 	database, err := db.NewDB(&cfg.DB)
 	if err != nil {
-		log.Fatal("Failed to connect to database", err)
+		lgr.Log(logger.FormatJSON, logger.FATAL, fmt.Sprintf("Failed to connect to database: %v", err))
 	}
 
 	if err := database.Ping(context.Background()); err != nil {
-		log.Fatal("Failed to ping database", err)
+		lgr.Log(logger.FormatJSON, logger.FATAL, fmt.Sprintf("Failed to ping database: %v", err))
 	}
 
 	lgr.Log(logger.FormatJSON, logger.INFO, "Connection to database successful")

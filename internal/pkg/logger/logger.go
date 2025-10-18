@@ -3,6 +3,9 @@ package logger
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"runtime"
+	"runtime/debug"
 	"time"
 )
 
@@ -43,9 +46,11 @@ const (
 )
 
 type Entry struct {
-	Timestamp time.Time `json:"timestamp"`
-	Level     string    `json:"level"`
-	Message   string    `json:"message"`
+	Timestamp  time.Time `json:"timestamp"`
+	Level      string    `json:"level"`
+	Message    string    `json:"message"`
+	Stacktrace *string   `json:"stacktrace,omitempty"`
+	Caller     *string   `json:"caller,omitempty"`
 }
 
 type Logger interface {
@@ -65,6 +70,16 @@ func (l *logger) Log(format Format, logLevel LogLevel, message string) {
 		Message:   message,
 	}
 
+	if logLevel == ERROR || logLevel == FATAL {
+		stacktrace := string(debug.Stack())
+
+		_, file, line, _ := runtime.Caller(1)
+		caller := fmt.Sprintf("%s:%d", file, line)
+
+		entry.Stacktrace = &stacktrace
+		entry.Caller = &caller
+	}
+
 	switch format {
 	case FormatJSON:
 		fmt.Println(l.formatJSON(entry))
@@ -72,6 +87,9 @@ func (l *logger) Log(format Format, logLevel LogLevel, message string) {
 		fmt.Println(l.formatHuman(entry))
 	}
 
+	if logLevel == FATAL {
+		os.Exit(1)
+	}
 }
 
 func (l *logger) formatJSON(entry *Entry) string {
