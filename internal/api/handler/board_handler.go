@@ -2,7 +2,7 @@ package handler
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -10,6 +10,7 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/db"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
+	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type CreateBoardRequest struct {
@@ -19,16 +20,17 @@ type CreateBoardRequest struct {
 
 type BoardHandler struct {
 	database *db.DB
+	lgr      logger.Logger
 }
 
-func NewBoardHandler(database *db.DB) *BoardHandler {
-	return &BoardHandler{database}
+func NewBoardHandler(database *db.DB, lgr logger.Logger) *BoardHandler {
+	return &BoardHandler{database, lgr}
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 	boards, err := bh.database.Queries.GetAllBoards(r.Context())
 	if err != nil {
-		log.Printf("failed to get boards: %v", err)
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get boards: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
@@ -40,7 +42,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var createBoardRequest CreateBoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&createBoardRequest); err != nil {
-		log.Printf("failed to decode request: %v", err)
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -71,7 +73,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 
 	board, err := bh.database.Queries.CreateBoard(r.Context(), createBoardParams)
 	if err != nil {
-		log.Printf("failed to create board: %v", err)
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create board: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}

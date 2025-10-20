@@ -60,16 +60,18 @@ type Entry struct {
 }
 
 type Logger interface {
-	Log(format Format, logLevel LogLevel, message string, fields []*Field)
+	Log(logLevel LogLevel, message string, fields []*Field)
 }
 
-type logger struct{}
-
-func NewLogger() Logger {
-	return &logger{}
+type logger struct {
+	format Format
 }
 
-func (l *logger) Log(format Format, logLevel LogLevel, message string, fields []*Field) {
+func NewLogger(format Format) Logger {
+	return &logger{format}
+}
+
+func (l *logger) Log(logLevel LogLevel, message string, fields []*Field) {
 	entry := &Entry{
 		Timestamp: time.Now().UTC(),
 		Level:     logLevel.String(),
@@ -93,7 +95,7 @@ func (l *logger) Log(format Format, logLevel LogLevel, message string, fields []
 		entry.Caller = &caller
 	}
 
-	switch format {
+	switch l.format {
 	case FormatJSON:
 		fmt.Println(l.formatJSON(entry))
 	case FormatHuman:

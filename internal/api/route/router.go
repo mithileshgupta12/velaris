@@ -28,12 +28,12 @@ func NewRouter(lgr logger.Logger, database *db.DB) *Router {
 }
 
 func (r *Router) RegisterRoutes() {
-	BoardRoutes(r.mux, r.database)
+	BoardRoutes(r.mux, r.database, r.lgr)
 }
 
 func (r *Router) Serve(port int) error {
 	addr := fmt.Sprintf(":%d", port)
 
-	r.lgr.Log(logger.FormatJSON, logger.INFO, fmt.Sprintf("Server started on %s", addr), nil)
+	r.lgr.Log(logger.INFO, fmt.Sprintf("Server started on %s", addr), nil)
 	return http.ListenAndServe(addr, r.mux)
 }
