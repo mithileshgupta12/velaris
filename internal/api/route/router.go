@@ -34,6 +34,6 @@ func (r *Router) RegisterRoutes() {
 func (r *Router) Serve(port int) error {
 	addr := fmt.Sprintf(":%d", port)
 
-	r.lgr.Log(logger.FormatJSON, logger.INFO, fmt.Sprintf("Server started on %s", addr))
+	r.lgr.Log(logger.FormatJSON, logger.INFO, fmt.Sprintf("Server started on %s", addr), nil)
 	return http.ListenAndServe(addr, r.mux)
 }

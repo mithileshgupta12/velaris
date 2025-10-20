@@ -45,16 +45,22 @@ const (
 	FormatHuman
 )
 
+type Field struct {
+	Key   string `json:"key"`
+	Value any    `json:"value"`
+}
+
 type Entry struct {
-	Timestamp  time.Time `json:"timestamp"`
-	Level      string    `json:"level"`
-	Message    string    `json:"message"`
-	Stacktrace *string   `json:"stacktrace,omitempty"`
-	Caller     *string   `json:"caller,omitempty"`
+	Timestamp  time.Time      `json:"timestamp"`
+	Level      string         `json:"level"`
+	Message    string         `json:"message"`
+	Fields     map[string]any `json:"fields,omitempty"`
+	Stacktrace *string        `json:"stacktrace,omitempty"`
+	Caller     *string        `json:"caller,omitempty"`
 }
 
 type Logger interface {
-	Log(format Format, logLevel LogLevel, message string)
+	Log(format Format, logLevel LogLevel, message string, fields []*Field)
 }
 
 type logger struct{}
@@ -63,11 +69,18 @@ func NewLogger() Logger {
 	return &logger{}
 }
 
-func (l *logger) Log(format Format, logLevel LogLevel, message string) {
+func (l *logger) Log(format Format, logLevel LogLevel, message string, fields []*Field) {
 	entry := &Entry{
 		Timestamp: time.Now().UTC(),
 		Level:     logLevel.String(),
 		Message:   message,
+	}
+
+	if len(fields) > 0 {
+		entry.Fields = make(map[string]any)
+		for _, field := range fields {
+			entry.Fields[field.Key] = field.Value
+		}
 	}
 
 	if logLevel == ERROR || logLevel == FATAL {
