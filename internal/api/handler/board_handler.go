@@ -1,12 +1,21 @@
 package handler
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mithileshgupta12/velaris/internal/db"
+	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 )
+
+type CreateBoardRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
 
 type BoardHandler struct {
 	database *db.DB
@@ -28,7 +37,46 @@ func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
-	//
+	var createBoardRequest CreateBoardRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&createBoardRequest); err != nil {
+		log.Printf("failed to decode request: %v", err)
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+
+	createBoardRequest.Name = strings.TrimSpace(createBoardRequest.Name)
+	createBoardRequest.Description = strings.TrimSpace(createBoardRequest.Description)
+
+	if createBoardRequest.Name == "" {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name is a required field")
+		return
+	}
+
+	createBoardParams := repository.CreateBoardParams{
+		Name: createBoardRequest.Name,
+	}
+
+	if createBoardRequest.Description == "" {
+		createBoardParams.Description = pgtype.Text{
+			String: "",
+			Valid:  false,
+		}
+	} else {
+		createBoardParams.Description = pgtype.Text{
+			String: createBoardRequest.Description,
+			Valid:  true,
+		}
+	}
+
+	board, err := bh.database.Queries.CreateBoard(r.Context(), createBoardParams)
+	if err != nil {
+		log.Printf("failed to create board: %v", err)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	helper.JsonResponse(w, http.StatusOK, board)
 }
 
 func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
