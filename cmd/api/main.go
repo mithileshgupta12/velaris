@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/mithileshgupta12/velaris/internal/api/route"
 	"github.com/mithileshgupta12/velaris/internal/config"
@@ -18,11 +17,11 @@ func main() {
 
 	database, err := db.NewDB(&cfg.DB)
 	if err != nil {
-		lgr.Log(logger.FATAL, fmt.Sprintf("Failed to connect to database: %v", err), nil)
+		lgr.Log(logger.FATAL, fmt.Sprintf("failed to connect to database: %v", err), nil)
 	}
 
 	if err := database.Ping(context.Background()); err != nil {
-		lgr.Log(logger.FATAL, fmt.Sprintf("Failed to ping database: %v", err), nil)
+		lgr.Log(logger.FATAL, fmt.Sprintf("failed to ping database: %v", err), nil)
 	}
 
 	lgr.Log(logger.INFO, "Connection to database successful", nil)
@@ -30,5 +29,7 @@ func main() {
 
 	r := route.NewRouter(lgr, database)
 	r.RegisterRoutes()
-	log.Fatal(r.Serve(8000))
+	if err := r.Serve(8000); err != nil {
+		lgr.Log(logger.FATAL, fmt.Sprintf("failed to start server: %v", err), nil)
+	}
 }
