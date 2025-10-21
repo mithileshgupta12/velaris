@@ -97,7 +97,6 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("invalid board id format: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
 	}
