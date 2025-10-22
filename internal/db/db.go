@@ -13,7 +13,7 @@ import (
 
 type DB struct {
 	pool    *pgxpool.Pool
-	Queries *repository.Queries
+	Queries repository.Querier
 }
 
 var (
@@ -56,10 +56,6 @@ func NewDB(dbFlags *config.DBFlags) (*DB, error) {
 	})
 
 	return instance, instanceErr
-}
-
-func (db *DB) GetPool() *pgxpool.Pool {
-	return db.pool
 }
 
 func (db *DB) Ping(ctx context.Context) error {

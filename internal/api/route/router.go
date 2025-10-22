@@ -6,17 +6,17 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/mithileshgupta12/velaris/internal/db"
+	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type Router struct {
-	lgr      logger.Logger
-	mux      *chi.Mux
-	database *db.DB
+	lgr     logger.Logger
+	mux     *chi.Mux
+	queries repository.Querier
 }
 
-func NewRouter(lgr logger.Logger, database *db.DB) *Router {
+func NewRouter(lgr logger.Logger, queries repository.Querier) *Router {
 	mux := chi.NewRouter()
 
 	mux.Use(middleware.RequestID)
@@ -24,11 +24,11 @@ func NewRouter(lgr logger.Logger, database *db.DB) *Router {
 	mux.Use(middleware.Logger)
 	mux.Use(middleware.Recoverer)
 
-	return &Router{lgr, mux, database}
+	return &Router{lgr, mux, queries}
 }
 
 func (r *Router) RegisterRoutes() {
-	BoardRoutes(r.mux, r.database, r.lgr)
+	BoardRoutes(r.mux, r.queries, r.lgr)
 }
 
 func (r *Router) Serve(port int) error {

@@ -27,7 +27,7 @@ func main() {
 	lgr.Log(logger.INFO, "Connection to database successful", nil)
 	defer database.Close()
 
-	r := route.NewRouter(lgr, database)
+	r := route.NewRouter(lgr, database.Queries)
 	r.RegisterRoutes()
 	if err := r.Serve(8000); err != nil {
 		lgr.Log(logger.FATAL, fmt.Sprintf("failed to start server: %v", err), nil)

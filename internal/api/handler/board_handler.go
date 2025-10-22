@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/mithileshgupta12/velaris/internal/db"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
@@ -21,16 +21,16 @@ type CreateBoardRequest struct {
 }
 
 type BoardHandler struct {
-	database *db.DB
-	lgr      logger.Logger
+	queries repository.Querier
+	lgr     logger.Logger
 }
 
-func NewBoardHandler(database *db.DB, lgr logger.Logger) *BoardHandler {
-	return &BoardHandler{database, lgr}
+func NewBoardHandler(queries repository.Querier, lgr logger.Logger) *BoardHandler {
+	return &BoardHandler{queries, lgr}
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
-	boards, err := bh.database.Queries.GetAllBoards(r.Context())
+	boards, err := bh.queries.GetAllBoards(r.Context())
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get boards: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
@@ -73,7 +73,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	board, err := bh.database.Queries.CreateBoard(r.Context(), createBoardParams)
+	board, err := bh.queries.CreateBoard(r.Context(), createBoardParams)
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create board: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
@@ -84,7 +84,29 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
-	//
+	idParam := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
+		return
+	}
+
+	board, err := bh.queries.GetBoardById(r.Context(), int32(id))
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
+			return
+		}
+
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
+			{Key: "board_id", Value: id},
+		})
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	helper.JsonResponse(w, http.StatusOK, board)
 }
 
 func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -100,7 +122,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rowsAffected, err := bh.database.Queries.DeleteBoard(r.Context(), int32(id))
+	rowsAffected, err := bh.queries.DeleteBoard(r.Context(), int32(id))
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
 			{Key: "board_id", Value: id},
