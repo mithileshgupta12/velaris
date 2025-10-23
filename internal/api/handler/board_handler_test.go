@@ -14,49 +14,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/mithileshgupta12/velaris/internal/db"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
-
-type MockQueries struct {
-	CreateBoardFunc  func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error)
-	DeleteBoardFunc  func(ctx context.Context, id int32) (int64, error)
-	GetAllBoardsFunc func(ctx context.Context) ([]repository.Board, error)
-	GetBoardByIdFunc func(ctx context.Context, id int32) (repository.Board, error)
-}
-
-func (mq *MockQueries) CreateBoard(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
-	if mq.CreateBoardFunc != nil {
-		return mq.CreateBoardFunc(ctx, arg)
-	}
-
-	return repository.Board{}, nil
-}
-
-func (mq *MockQueries) DeleteBoard(ctx context.Context, id int32) (int64, error) {
-	if mq.DeleteBoardFunc != nil {
-		return mq.DeleteBoardFunc(ctx, id)
-	}
-
-	return 0, nil
-}
-
-func (mq *MockQueries) GetAllBoards(ctx context.Context) ([]repository.Board, error) {
-	if mq.GetAllBoardsFunc != nil {
-		return mq.GetAllBoardsFunc(ctx)
-	}
-
-	return []repository.Board{}, nil
-}
-
-func (mq *MockQueries) GetBoardById(ctx context.Context, id int32) (repository.Board, error) {
-	if mq.GetBoardByIdFunc != nil {
-		return mq.GetBoardByIdFunc(ctx, id)
-	}
-
-	return repository.Board{}, nil
-}
 
 func TestBoardHandler_Index(t *testing.T) {
 	now := time.Now()
@@ -78,7 +40,7 @@ func TestBoardHandler_Index(t *testing.T) {
 		Name        string
 		Endpoint    string
 		Method      string
-		MockQueries *MockQueries
+		MockQueries *db.MockQueries
 		StatusCode  int
 		Response    any
 		Success     bool
@@ -87,7 +49,7 @@ func TestBoardHandler_Index(t *testing.T) {
 			Name:     "must return 200 and list of boards when repository returns boards successfully",
 			Endpoint: "/boards",
 			Method:   http.MethodGet,
-			MockQueries: &MockQueries{
+			MockQueries: &db.MockQueries{
 				GetAllBoardsFunc: func(ctx context.Context) ([]repository.Board, error) {
 					return boards, nil
 				},
@@ -103,7 +65,7 @@ func TestBoardHandler_Index(t *testing.T) {
 			Name:     "must return 200 and empty array when repository returns no boards",
 			Endpoint: "/boards",
 			Method:   http.MethodGet,
-			MockQueries: &MockQueries{
+			MockQueries: &db.MockQueries{
 				GetAllBoardsFunc: func(ctx context.Context) ([]repository.Board, error) {
 					return []repository.Board{}, nil
 				},
@@ -119,7 +81,7 @@ func TestBoardHandler_Index(t *testing.T) {
 			Name:     "must return 500 and error message when repository returns error",
 			Endpoint: "/boards",
 			Method:   http.MethodGet,
-			MockQueries: &MockQueries{
+			MockQueries: &db.MockQueries{
 				GetAllBoardsFunc: func(ctx context.Context) ([]repository.Board, error) {
 					return []repository.Board{}, errors.New("some error")
 				},
@@ -207,7 +169,7 @@ func TestBoardHandler_Show(t *testing.T) {
 		Endpoint    string
 		ID          string
 		Method      string
-		MockQueries *MockQueries
+		MockQueries *db.MockQueries
 		StatusCode  int
 		Response    any
 		Success     bool
@@ -217,7 +179,7 @@ func TestBoardHandler_Show(t *testing.T) {
 			Endpoint: "/boards",
 			ID:       "1",
 			Method:   http.MethodGet,
-			MockQueries: &MockQueries{
+			MockQueries: &db.MockQueries{
 				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
 					return board, nil
 				},
@@ -234,7 +196,7 @@ func TestBoardHandler_Show(t *testing.T) {
 			Endpoint: "/boards",
 			ID:       "1",
 			Method:   http.MethodGet,
-			MockQueries: &MockQueries{
+			MockQueries: &db.MockQueries{
 				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
 					return repository.Board{}, pgx.ErrNoRows
 				},
@@ -253,7 +215,7 @@ func TestBoardHandler_Show(t *testing.T) {
 			Endpoint:    "/boards",
 			ID:          "abc",
 			Method:      http.MethodGet,
-			MockQueries: &MockQueries{},
+			MockQueries: &db.MockQueries{},
 			StatusCode:  http.StatusBadRequest,
 			Response: helper.ErrorResponse{
 				Success: false,
@@ -268,7 +230,7 @@ func TestBoardHandler_Show(t *testing.T) {
 			Endpoint: "/boards",
 			ID:       "1",
 			Method:   http.MethodGet,
-			MockQueries: &MockQueries{
+			MockQueries: &db.MockQueries{
 				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
 					return repository.Board{}, errors.New("some error")
 				},
