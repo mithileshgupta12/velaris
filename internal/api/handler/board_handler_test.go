@@ -153,7 +153,7 @@ func TestBoardHandler(t *testing.T) {
 				t.Errorf("want %s got %s", wantHeader, gotHeader)
 			}
 
-			if test.Success == false {
+			if !test.Success {
 				var gotResponse helper.ErrorResponse
 				if err := json.Unmarshal(rr.Body.Bytes(), &gotResponse); err != nil {
 					t.Errorf("failed to unmarshal json %v", err)
