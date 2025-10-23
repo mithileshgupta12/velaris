@@ -20,6 +20,11 @@ type CreateBoardRequest struct {
 	Description string `json:"description"`
 }
 
+type UpdateBoardRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 type BoardHandler struct {
 	queries repository.Querier
 	lgr     logger.Logger
@@ -110,7 +115,62 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
-	//
+	idParam := chi.URLParam(r, "id")
+
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
+		return
+	}
+
+	var updateBoardRequest UpdateBoardRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&updateBoardRequest); err != nil {
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+
+	updateBoardRequest.Name = strings.TrimSpace(updateBoardRequest.Name)
+	updateBoardRequest.Description = strings.TrimSpace(updateBoardRequest.Description)
+
+	if updateBoardRequest.Name == "" {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name is a required field")
+		return
+	}
+
+	updateBoardByIdParams := repository.UpdateBoardByIdParams{
+		ID:   int32(id),
+		Name: updateBoardRequest.Name,
+	}
+
+	if updateBoardRequest.Description == "" {
+		updateBoardByIdParams.Description = pgtype.Text{
+			String: "",
+			Valid:  false,
+		}
+	} else {
+		updateBoardByIdParams.Description = pgtype.Text{
+			String: updateBoardRequest.Description,
+			Valid:  true,
+		}
+	}
+
+	board, err := bh.queries.UpdateBoardById(r.Context(), updateBoardByIdParams)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
+			return
+		}
+
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to update board: %v", err), []*logger.Field{
+			{Key: "board_id", Value: id},
+		})
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	helper.JsonResponse(w, http.StatusOK, board)
 }
 
 func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
@@ -122,7 +182,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rowsAffected, err := bh.queries.DeleteBoard(r.Context(), int32(id))
+	rowsAffected, err := bh.queries.DeleteBoardById(r.Context(), int32(id))
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
 			{Key: "board_id", Value: id},
