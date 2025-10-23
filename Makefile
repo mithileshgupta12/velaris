@@ -41,3 +41,6 @@ generate-db:
 	@echo "Generating db..."
 	@rm -rf ./internal/db/repository
 	@sqlc generate
+
+test:
+	@go test ./...

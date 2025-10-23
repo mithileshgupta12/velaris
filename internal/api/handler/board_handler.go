@@ -33,7 +33,7 @@ func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 	boards, err := bh.queries.GetAllBoards(r.Context())
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get boards: %v", err), nil)
-		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
