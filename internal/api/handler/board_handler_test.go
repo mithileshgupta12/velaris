@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
@@ -204,7 +205,7 @@ func TestBoardHandler_Show(t *testing.T) {
 	tests := []struct {
 		Name        string
 		Endpoint    string
-		ID          int
+		ID          string
 		Method      string
 		MockQueries *MockQueries
 		StatusCode  int
@@ -214,7 +215,7 @@ func TestBoardHandler_Show(t *testing.T) {
 		{
 			Name:     "must return 200 and board when repository returns board successfully",
 			Endpoint: "/boards",
-			ID:       1,
+			ID:       "1",
 			Method:   http.MethodGet,
 			MockQueries: &MockQueries{
 				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
@@ -228,6 +229,59 @@ func TestBoardHandler_Show(t *testing.T) {
 			},
 			Success: true,
 		},
+		{
+			Name:     "must return 404 and error message when board not found",
+			Endpoint: "/boards",
+			ID:       "1",
+			Method:   http.MethodGet,
+			MockQueries: &MockQueries{
+				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
+					return repository.Board{}, pgx.ErrNoRows
+				},
+			},
+			StatusCode: http.StatusNotFound,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "board not found",
+				},
+			},
+			Success: false,
+		},
+		{
+			Name:        "must return 400 and error message when id parameter is invalid",
+			Endpoint:    "/boards",
+			ID:          "abc",
+			Method:      http.MethodGet,
+			MockQueries: &MockQueries{},
+			StatusCode:  http.StatusBadRequest,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "invalid board id",
+				},
+			},
+			Success: false,
+		},
+		{
+			Name:     "must return 500 and error message when repository returns unexpected error",
+			Endpoint: "/boards",
+			ID:       "1",
+			Method:   http.MethodGet,
+			MockQueries: &MockQueries{
+				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
+					return repository.Board{}, errors.New("some error")
+				},
+			},
+			StatusCode: http.StatusInternalServerError,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "internal server error",
+				},
+			},
+			Success: false,
+		},
 	}
 
 	lgr := logger.NewLogger(logger.FormatJSON)
@@ -240,7 +294,7 @@ func TestBoardHandler_Show(t *testing.T) {
 
 			router.Get("/boards/{id}", boardHandler.Show)
 
-			r := httptest.NewRequest(test.Method, fmt.Sprintf("%s/%d", test.Endpoint, test.ID), nil)
+			r := httptest.NewRequest(test.Method, fmt.Sprintf("%s/%s", test.Endpoint, test.ID), nil)
 			rr := httptest.NewRecorder()
 
 			router.ServeHTTP(rr, r)
