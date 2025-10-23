@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
@@ -55,7 +57,7 @@ func (mq *MockQueries) GetBoardById(ctx context.Context, id int32) (repository.B
 	return repository.Board{}, nil
 }
 
-func TestBoardHandler(t *testing.T) {
+func TestBoardHandler_Index(t *testing.T) {
 	now := time.Now()
 
 	boards := []repository.Board{
@@ -142,6 +144,106 @@ func TestBoardHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			boardHandler.Index(rr, r)
+
+			if test.StatusCode != rr.Code {
+				t.Errorf("want status code %d got %d", test.StatusCode, rr.Code)
+			}
+
+			wantHeader, gotHeader := "application/json", rr.Header().Get("Content-Type")
+
+			if gotHeader != wantHeader {
+				t.Errorf("want %s got %s", wantHeader, gotHeader)
+			}
+
+			if !test.Success {
+				var gotResponse helper.ErrorResponse
+				if err := json.Unmarshal(rr.Body.Bytes(), &gotResponse); err != nil {
+					t.Errorf("failed to unmarshal json %v", err)
+				}
+
+				if !reflect.DeepEqual(test.Response, gotResponse) {
+					t.Errorf("wanted %+v got %+v", test.Response, gotResponse)
+				}
+			} else {
+				expectedJSON, err := json.Marshal(test.Response)
+				if err != nil {
+					t.Errorf("failed to marshal json %v", err)
+				}
+
+				var expectedResponse, gotResponse helper.SuccessResponse
+				if err := json.Unmarshal(rr.Body.Bytes(), &gotResponse); err != nil {
+					t.Errorf("failed to unmarshal json %v", err)
+				}
+
+				if err := json.Unmarshal(expectedJSON, &expectedResponse); err != nil {
+					t.Errorf("failed to unmarshal json %v", err)
+				}
+
+				if !reflect.DeepEqual(expectedResponse, gotResponse) {
+					t.Errorf("wanted %+v got %+v", expectedResponse, gotResponse)
+				}
+			}
+		})
+	}
+}
+
+func TestBoardHandler_Show(t *testing.T) {
+	now := time.Now()
+
+	board := repository.Board{
+		ID:   1,
+		Name: "lorem",
+		Description: pgtype.Text{
+			String: "lorem ipsum dolor",
+			Valid:  true,
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	tests := []struct {
+		Name        string
+		Endpoint    string
+		ID          int
+		Method      string
+		MockQueries *MockQueries
+		StatusCode  int
+		Response    any
+		Success     bool
+	}{
+		{
+			Name:     "must return 200 and board when repository returns board successfully",
+			Endpoint: "/boards",
+			ID:       1,
+			Method:   http.MethodGet,
+			MockQueries: &MockQueries{
+				GetBoardByIdFunc: func(ctx context.Context, id int32) (repository.Board, error) {
+					return board, nil
+				},
+			},
+			StatusCode: http.StatusOK,
+			Response: helper.SuccessResponse{
+				Success: true,
+				Data:    board,
+			},
+			Success: true,
+		},
+	}
+
+	lgr := logger.NewLogger(logger.FormatJSON)
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			boardHandler := NewBoardHandler(test.MockQueries, lgr)
+
+			router := chi.NewRouter()
+
+			router.Get("/boards/{id}", boardHandler.Show)
+
+			r := httptest.NewRequest(test.Method, fmt.Sprintf("%s/%d", test.Endpoint, test.ID), nil)
+			rr := httptest.NewRecorder()
+
+			router.ServeHTTP(rr, r)
 
 			if test.StatusCode != rr.Code {
 				t.Errorf("want status code %d got %d", test.StatusCode, rr.Code)
