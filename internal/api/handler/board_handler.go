@@ -63,7 +63,8 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 	}
 
 	createBoardParams := repository.CreateBoardParams{
-		Name: createBoardRequest.Name,
+		Name:   createBoardRequest.Name,
+		UserID: 1,
 	}
 
 	if createBoardRequest.Description == "" {
@@ -97,7 +98,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board, err := bh.queries.GetBoardById(r.Context(), int32(id))
+	board, err := bh.queries.GetBoardById(r.Context(), int64(id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
@@ -140,7 +141,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	updateBoardByIdParams := repository.UpdateBoardByIdParams{
-		ID:   int32(id),
+		ID:   int64(id),
 		Name: updateBoardRequest.Name,
 	}
 
@@ -182,7 +183,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rowsAffected, err := bh.queries.DeleteBoardById(r.Context(), int32(id))
+	rowsAffected, err := bh.queries.DeleteBoardById(r.Context(), int64(id))
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
 			{Key: "board_id", Value: id},

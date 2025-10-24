@@ -3,8 +3,8 @@ SELECT id, name, description, created_at, updated_at
 FROM boards;
 
 -- name: CreateBoard :one
-INSERT INTO boards (name, description)
-VALUES ($1, $2)
+INSERT INTO boards (name, description, user_id)
+VALUES ($1, $2, $3)
 RETURNING id, name, description, created_at, updated_at;
 
 -- name: DeleteBoardById :execrows
