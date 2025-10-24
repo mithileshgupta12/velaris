@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -260,6 +263,289 @@ func TestBoardHandler_Show(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			router.ServeHTTP(rr, r)
+
+			if test.StatusCode != rr.Code {
+				t.Errorf("want status code %d got %d", test.StatusCode, rr.Code)
+			}
+
+			wantHeader, gotHeader := "application/json", rr.Header().Get("Content-Type")
+
+			if gotHeader != wantHeader {
+				t.Errorf("want %s got %s", wantHeader, gotHeader)
+			}
+
+			if !test.Success {
+				var gotResponse helper.ErrorResponse
+				if err := json.Unmarshal(rr.Body.Bytes(), &gotResponse); err != nil {
+					t.Errorf("failed to unmarshal json %v", err)
+				}
+
+				if !reflect.DeepEqual(test.Response, gotResponse) {
+					t.Errorf("wanted %+v got %+v", test.Response, gotResponse)
+				}
+			} else {
+				expectedJSON, err := json.Marshal(test.Response)
+				if err != nil {
+					t.Errorf("failed to marshal json %v", err)
+				}
+
+				var expectedResponse, gotResponse helper.SuccessResponse
+				if err := json.Unmarshal(rr.Body.Bytes(), &gotResponse); err != nil {
+					t.Errorf("failed to unmarshal json %v", err)
+				}
+
+				if err := json.Unmarshal(expectedJSON, &expectedResponse); err != nil {
+					t.Errorf("failed to unmarshal json %v", err)
+				}
+
+				if !reflect.DeepEqual(expectedResponse, gotResponse) {
+					t.Errorf("wanted %+v got %+v", expectedResponse, gotResponse)
+				}
+			}
+		})
+	}
+}
+
+func TestBoardHandler_Store(t *testing.T) {
+	now := time.Now()
+
+	board := repository.Board{
+		ID:   1,
+		Name: "lorem",
+		Description: pgtype.Text{
+			String: "lorem ipsum dolor",
+			Valid:  true,
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	boardWithoutDescription := repository.Board{
+		ID:   1,
+		Name: "lorem",
+		Description: pgtype.Text{
+			String: "",
+			Valid:  false,
+		},
+		CreatedAt: now,
+		UpdatedAt: now,
+	}
+
+	tests := []struct {
+		Name        string
+		Endpoint    string
+		Method      string
+		RequestBody any
+		MockQueries *db.MockQueries
+		StatusCode  int
+		Response    any
+		Success     bool
+	}{
+		{
+			Name:     "must return 200 and board when repository creates board successfully with description",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]string{
+				"name":        "lorem",
+				"description": "lorem ipsum dolor",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return board, nil
+				},
+			},
+			StatusCode: http.StatusCreated,
+			Response: helper.SuccessResponse{
+				Success: true,
+				Data:    board,
+			},
+			Success: true,
+		},
+		{
+			Name:     "must return 200 and board when repository creates board successfully without description",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]any{
+				"name": "lorem",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return boardWithoutDescription, nil
+				},
+			},
+			StatusCode: http.StatusCreated,
+			Response: helper.SuccessResponse{
+				Success: true,
+				Data:    boardWithoutDescription,
+			},
+			Success: true,
+		},
+		{
+			Name:     "must return 400 and error message when name is empty string",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]any{
+				"name": "",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return repository.Board{}, nil
+				},
+			},
+			StatusCode: http.StatusBadRequest,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "name is a required field",
+				},
+			},
+			Success: false,
+		},
+		{
+			Name:     "must return 400 and error message when name contains only whitespace",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]any{
+				"name": "     ",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return repository.Board{}, nil
+				},
+			},
+			StatusCode: http.StatusBadRequest,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "name is a required field",
+				},
+			},
+			Success: false,
+		},
+		{
+			Name:     "must return 200 and board when name has leading/trailing whitespace (should trim)",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]any{
+				"name": "  lorem  ",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return boardWithoutDescription, nil
+				},
+			},
+			StatusCode: http.StatusCreated,
+			Response: helper.SuccessResponse{
+				Success: true,
+				Data:    boardWithoutDescription,
+			},
+			Success: true,
+		},
+		{
+			Name:     "must return 200 and board when description has leading/trailing whitespace (should trim)",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]any{
+				"name":        "lorem",
+				"description": "  lorem ipsum dolor  ",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return board, nil
+				},
+			},
+			StatusCode: http.StatusCreated,
+			Response: helper.SuccessResponse{
+				Success: true,
+				Data:    board,
+			},
+			Success: true,
+		},
+		{
+			Name:        "must return 400 and error message when request body is invalid JSON",
+			Endpoint:    "/boards",
+			Method:      http.MethodPost,
+			RequestBody: "invalid json{",
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return repository.Board{}, nil
+				},
+			},
+			StatusCode: http.StatusBadRequest,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "invalid request",
+				},
+			},
+			Success: false,
+		},
+		{
+			Name:        "must return 400 and error message when request body is empty",
+			Endpoint:    "/boards",
+			Method:      http.MethodPost,
+			RequestBody: "",
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return repository.Board{}, nil
+				},
+			},
+			StatusCode: http.StatusBadRequest,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "invalid request",
+				},
+			},
+			Success: false,
+		},
+		{
+			Name:     "must return 500 and error message when repository returns unexpected error",
+			Endpoint: "/boards",
+			Method:   http.MethodPost,
+			RequestBody: map[string]string{
+				"name":        "lorem",
+				"description": "lorem ipsum dolor",
+			},
+			MockQueries: &db.MockQueries{
+				CreateBoardFunc: func(ctx context.Context, arg repository.CreateBoardParams) (repository.Board, error) {
+					return repository.Board{}, errors.New("some error")
+				},
+			},
+			StatusCode: http.StatusInternalServerError,
+			Response: helper.ErrorResponse{
+				Success: false,
+				Error: helper.Error{
+					Message: "internal server error",
+				},
+			},
+			Success: false,
+		},
+	}
+
+	lgr := logger.NewLogger(logger.FormatJSON)
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			var requestBody io.Reader
+			if test.RequestBody != nil {
+				if strBody, ok := test.RequestBody.(string); ok {
+					requestBody = strings.NewReader(strBody)
+				} else {
+					requestBytes, err := json.Marshal(test.RequestBody)
+					if err != nil {
+						t.Errorf("failed to marshal json %v", err)
+					}
+					requestBody = bytes.NewReader(requestBytes)
+				}
+			}
+
+			boardHandler := NewBoardHandler(test.MockQueries, lgr)
+
+			r := httptest.NewRequest(test.Method, test.Endpoint, requestBody)
+			rr := httptest.NewRecorder()
+
+			boardHandler.Store(rr, r)
 
 			if test.StatusCode != rr.Code {
 				t.Errorf("want status code %d got %d", test.StatusCode, rr.Code)

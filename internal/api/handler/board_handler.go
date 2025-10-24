@@ -81,11 +81,11 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 	board, err := bh.queries.CreateBoard(r.Context(), createBoardParams)
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create board: %v", err), nil)
-		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "Internal server error")
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	helper.JsonResponse(w, http.StatusOK, board)
+	helper.JsonResponse(w, http.StatusCreated, board)
 }
 
 func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
