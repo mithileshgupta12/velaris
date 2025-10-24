@@ -92,7 +92,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 
 	id, err := strconv.Atoi(idParam)
-	if err != nil {
+	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
 	}
@@ -118,7 +118,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 
 	id, err := strconv.Atoi(idParam)
-	if err != nil {
+	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
 	}
@@ -177,7 +177,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 	idParam := chi.URLParam(r, "id")
 
 	id, err := strconv.Atoi(idParam)
-	if err != nil {
+	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
 	}

@@ -67,8 +67,16 @@ type logger struct {
 	format Format
 }
 
+type testLogger struct {
+	format Format
+}
+
 func NewLogger(format Format) Logger {
 	return &logger{format}
+}
+
+func NewTestLogger(format Format) Logger {
+	return &testLogger{format}
 }
 
 func (l *logger) Log(logLevel LogLevel, message string, fields []*Field) {
@@ -125,3 +133,5 @@ func (l *logger) formatHuman(entry *Entry) string {
 		entry.Message,
 	)
 }
+
+func (l *testLogger) Log(logLevel LogLevel, message string, fields []*Field) {}
