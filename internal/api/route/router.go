@@ -29,6 +29,7 @@ func NewRouter(lgr logger.Logger, queries repository.Querier) *Router {
 
 func (r *Router) RegisterRoutes() {
 	BoardRoutes(r.mux, r.queries, r.lgr)
+	AuthRoutes(r.mux, r.queries, r.lgr)
 }
 
 func (r *Router) Serve(port int) error {
