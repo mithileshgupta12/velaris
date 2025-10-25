@@ -92,7 +92,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" {
+			if pgErr.Code == "23505" && pgErr.ConstraintName == "users_email_key" {
 				helper.ErrorJsonResponse(w, http.StatusConflict, "email is already taken")
 				return
 			}
