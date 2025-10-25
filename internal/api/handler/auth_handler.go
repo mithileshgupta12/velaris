@@ -45,7 +45,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	registerUserRequest.Name = strings.TrimSpace(registerUserRequest.Name)
-	registerUserRequest.Email = strings.TrimSpace(registerUserRequest.Email)
+	registerUserRequest.Email = strings.ToLower(strings.TrimSpace(registerUserRequest.Email))
 
 	if registerUserRequest.Name == "" {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name is a required field")
