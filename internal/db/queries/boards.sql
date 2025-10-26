@@ -18,6 +18,6 @@ WHERE id = $1;
 
 -- name: UpdateBoardById :one
 UPDATE boards
-SET name = $2, description = $3
+SET name = $2, description = $3, updated_at = CURRENT_TIMESTAMP
 WHERE id = $1
 RETURNING id, name, description, created_at, updated_at;
