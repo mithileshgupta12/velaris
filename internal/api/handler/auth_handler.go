@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
@@ -134,17 +137,57 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	err := ah.sessionStore.Set(r.Context(), "foo", "bar", time.Duration(time.Minute*5))
+	var loginUserRequest LoginUserRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&loginUserRequest); err != nil {
+		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
+		return
+	}
+
+	loginUserRequest.Email = strings.ToLower(strings.TrimSpace(loginUserRequest.Email))
+
+	user, err := ah.queries.GetUserByEmail(r.Context(), loginUserRequest.Email)
 	if err != nil {
+		if err == pgx.ErrNoRows {
+			helper.ErrorJsonResponse(w, http.StatusBadRequest, "username or password is invalid")
+			return
+		}
+
+		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get user by email: %v", err), []*logger.Field{
+			{Key: "user_email", Value: loginUserRequest.Email},
+		})
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	val, err := ah.sessionStore.Get(r.Context(), "foo")
+	sessionID := make([]byte, 32)
+	_, err = rand.Read(sessionID)
 	if err != nil {
+		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create session ID: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
 
-	helper.JsonResponse(w, http.StatusOK, val)
+	b64SessionID := base64.RawURLEncoding.EncodeToString(sessionID)
+
+	if err := ah.sessionStore.Set(r.Context(), b64SessionID, user.ID, time.Duration(time.Hour*24)); err != nil {
+		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to set value in session store: %v", err), nil)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:     "auth_session",
+		Value:    b64SessionID,
+		Path:     "/",
+		MaxAge:   60 * 60 * 24,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, cookie)
+
+	helper.JsonResponse(w, http.StatusOK, "Logged in successfully")
 }

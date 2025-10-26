@@ -9,7 +9,7 @@ import (
 )
 
 type SessionStore interface {
-	Set(ctx context.Context, key, value string, expiration time.Duration) error
+	Set(ctx context.Context, key, value any, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
 }
 
@@ -21,7 +21,7 @@ func NewSessionStore(client *redis.Client) SessionStore {
 	return &sessionStore{client}
 }
 
-func (ss *sessionStore) Set(ctx context.Context, key, value string, expiration time.Duration) error {
+func (ss *sessionStore) Set(ctx context.Context, key, value any, expiration time.Duration) error {
 	err := ss.client.Set(ctx, fmt.Sprintf("session:%s", key), value, expiration).Err()
 	if err != nil {
 		return err

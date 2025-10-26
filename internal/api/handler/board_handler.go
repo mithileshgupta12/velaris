@@ -105,7 +105,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
+		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get board by ID: %v", err), []*logger.Field{
 			{Key: "board_id", Value: id},
 		})
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
