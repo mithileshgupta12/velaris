@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
@@ -27,12 +29,13 @@ type LoginUserRequest struct {
 }
 
 type AuthHandler struct {
-	queries repository.Querier
-	lgr     logger.Logger
+	queries      repository.Querier
+	sessionStore cache.SessionStore
+	lgr          logger.Logger
 }
 
-func NewAuthHandler(queries repository.Querier, lgr logger.Logger) *AuthHandler {
-	return &AuthHandler{queries, lgr}
+func NewAuthHandler(queries repository.Querier, sessionStore cache.SessionStore, lgr logger.Logger) *AuthHandler {
+	return &AuthHandler{queries, sessionStore, lgr}
 }
 
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -52,8 +55,18 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(registerUserRequest.Name) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name must not be more than 255 characters long")
+		return
+	}
+
 	if registerUserRequest.Email == "" {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "email is a required field")
+		return
+	}
+
+	if len(registerUserRequest.Email) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "email must not be more than 255 characters long")
 		return
 	}
 
@@ -62,8 +75,23 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(registerUserRequest.Password) < 8 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must be at least 8 characters long")
+		return
+	}
+
+	if len(registerUserRequest.Password) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must not be more than 255 characters long")
+		return
+	}
+
 	if registerUserRequest.PasswordConfirmation == "" {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password_confirmation is a required field")
+		return
+	}
+
+	if len(registerUserRequest.PasswordConfirmation) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password_confirmation must not be more than 255 characters long")
 		return
 	}
 
@@ -106,5 +134,17 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	//
+	err := ah.sessionStore.Set(r.Context(), "foo", "bar", time.Duration(time.Minute*5))
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	val, err := ah.sessionStore.Get(r.Context(), "foo")
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	helper.JsonResponse(w, http.StatusOK, val)
 }

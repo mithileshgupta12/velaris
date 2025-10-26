@@ -11,5 +11,14 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
 
+  redis:
+    image: redis:8.2-alpine
+    restart: always
+    ports:
+      - ${CACHE_PORT:-6379}:6379
+    volumes:
+      - cache_data:/data
+
 volumes:
   pg_data:
+  cache_data:
