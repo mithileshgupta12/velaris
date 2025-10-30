@@ -5,33 +5,32 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddlewares "github.com/go-chi/chi/v5/middleware"
+	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type Router struct {
-	lgr     logger.Logger
-	mux     *chi.Mux
-	queries repository.Querier
-	stores  *cache.Stores
+	mux *chi.Mux
+	lgr logger.Logger
 }
 
-func NewRouter(lgr logger.Logger, queries repository.Querier, stores *cache.Stores) *Router {
+func NewRouter(lgr logger.Logger) *Router {
 	mux := chi.NewRouter()
 
-	mux.Use(middleware.RequestID)
-	mux.Use(middleware.RealIP)
-	mux.Use(middleware.Logger)
-	mux.Use(middleware.Recoverer)
+	mux.Use(chiMiddlewares.RequestID)
+	mux.Use(chiMiddlewares.RealIP)
+	mux.Use(chiMiddlewares.Logger)
+	mux.Use(chiMiddlewares.Recoverer)
 
-	return &Router{lgr, mux, queries, stores}
+	return &Router{mux, lgr}
 }
 
-func (r *Router) RegisterRoutes() {
-	BoardRoutes(r.mux, r.queries, r.lgr)
-	AuthRoutes(r.mux, r.queries, r.stores.SessionStore, r.lgr)
+func (r *Router) RegisterRoutes(queries repository.Querier, stores *cache.Stores, middlewares middleware.Middlewares) {
+	BoardRoutes(r.mux, queries, r.lgr)
+	AuthRoutes(r.mux, queries, stores.SessionStore, r.lgr, middlewares)
 }
 
 func (r *Router) Serve(port int) error {

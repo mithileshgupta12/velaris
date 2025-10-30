@@ -9,14 +9,22 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
-func AuthRoutes(r *chi.Mux, queries repository.Querier, sessionStore cache.SessionStore, lgr logger.Logger) {
+func AuthRoutes(
+	r *chi.Mux,
+	queries repository.Querier,
+	sessionStore cache.SessionStore,
+	lgr logger.Logger,
+	middlewares middleware.Middlewares,
+) {
 	authHandler := handler.NewAuthHandler(queries, sessionStore, lgr)
-
-	protected := r.With(middleware.AuthMiddleware)
 
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", authHandler.Register)
 		r.Post("/login", authHandler.Login)
-		protected.Post("/logout", authHandler.Logout)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middlewares.AuthMiddleware)
+			r.Post("/logout", authHandler.Logout)
+		})
 	})
 }

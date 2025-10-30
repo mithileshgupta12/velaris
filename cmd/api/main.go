@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/api/route"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/config"
@@ -38,8 +39,10 @@ func main() {
 	lgr.Log(logger.INFO, "Connection to cache successful", nil)
 	defer cache.Close()
 
-	r := route.NewRouter(lgr, database.Queries, stores)
-	r.RegisterRoutes()
+	middlewares := middleware.NewMiddlewares(database.Queries, stores.SessionStore)
+
+	r := route.NewRouter(lgr)
+	r.RegisterRoutes(database.Queries, stores, middlewares)
 	if err := r.Serve(8000); err != nil {
 		lgr.Log(logger.FATAL, fmt.Sprintf("failed to start server: %v", err), nil)
 	}
