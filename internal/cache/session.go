@@ -11,6 +11,7 @@ import (
 type SessionStore interface {
 	Set(ctx context.Context, key, value any, expiration time.Duration) error
 	Get(ctx context.Context, key string) (string, error)
+	Del(ctx context.Context, key string) error
 }
 
 type sessionStore struct {
@@ -22,11 +23,7 @@ func NewSessionStore(client *redis.Client) SessionStore {
 }
 
 func (ss *sessionStore) Set(ctx context.Context, key, value any, expiration time.Duration) error {
-	err := ss.client.Set(ctx, fmt.Sprintf("session:%s", key), value, expiration).Err()
-	if err != nil {
-		return err
-	}
-	return nil
+	return ss.client.Set(ctx, fmt.Sprintf("session:%s", key), value, expiration).Err()
 }
 
 func (ss *sessionStore) Get(ctx context.Context, key string) (string, error) {
@@ -35,4 +32,8 @@ func (ss *sessionStore) Get(ctx context.Context, key string) (string, error) {
 		return "", err
 	}
 	return result, nil
+}
+
+func (ss *sessionStore) Del(ctx context.Context, key string) error {
+	return ss.client.Del(ctx, fmt.Sprintf("session:%s", key)).Err()
 }

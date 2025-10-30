@@ -147,6 +147,26 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	loginUserRequest.Email = strings.ToLower(strings.TrimSpace(loginUserRequest.Email))
 
+	if loginUserRequest.Email == "" {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "email is a required field")
+		return
+	}
+
+	if len(loginUserRequest.Email) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "email must not be more than 255 characters long")
+		return
+	}
+
+	if loginUserRequest.Password == "" {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password is a required field")
+		return
+	}
+
+	if len(loginUserRequest.Password) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must not be more than 255 characters long")
+		return
+	}
+
 	user, err := ah.queries.GetUserByEmail(r.Context(), loginUserRequest.Email)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -158,6 +178,12 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			{Key: "user_email", Value: loginUserRequest.Email},
 		})
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	ok, err := helper.VerifyPassword(loginUserRequest.Password, user.Password)
+	if err != nil || !ok {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "username or password is invalid")
 		return
 	}
 
@@ -190,4 +216,33 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 
 	helper.JsonResponse(w, http.StatusOK, "Logged in successfully")
+}
+
+func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	sessionCookie, err := r.Cookie("auth_session")
+	if err != nil {
+		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get session cookie: %v", err), nil)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	if err := ah.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
+		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete record from session: %v", err), nil)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	cookie := &http.Cookie{
+		Name:     "auth_session",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, cookie)
+
+	helper.JsonResponse(w, http.StatusOK, "Logged out successfully")
 }
