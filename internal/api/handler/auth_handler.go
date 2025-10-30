@@ -13,6 +13,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
@@ -209,7 +210,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   60 * 60 * 24,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
@@ -238,11 +239,17 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   true,
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	}
 
 	http.SetCookie(w, cookie)
 
 	helper.JsonResponse(w, http.StatusOK, "Logged out successfully")
+}
+
+func (ah *AuthHandler) GetLoggedInUser(w http.ResponseWriter, r *http.Request) {
+	loggedInUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	helper.JsonResponse(w, http.StatusOK, loggedInUser)
 }

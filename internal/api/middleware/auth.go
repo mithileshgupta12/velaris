@@ -13,9 +13,9 @@ type ctxUserKey string
 const CtxUserKey ctxUserKey = "ctxUser"
 
 type CtxUser struct {
-	ID    int64
-	Name  string
-	Email string
+	ID    int64  `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
 func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
