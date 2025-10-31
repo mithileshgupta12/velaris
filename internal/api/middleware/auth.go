@@ -61,7 +61,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
 				m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete entry from session store: %v", err), []*logger.Field{
 					{Key: "session_id", Value: sessionCookie.Value},
-					{Key: "user_id", Value: sessionData},
+					{Key: "user_id", Value: userId},
 				})
 			}
 			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unauthenticated")
