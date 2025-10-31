@@ -6,6 +6,7 @@
 </template>
 
 <script setup lang="ts">
+import axios from '@/utils/axios'
 import { reactive } from 'vue'
 
 const form = reactive({
@@ -13,7 +14,12 @@ const form = reactive({
   password: '',
 })
 
-const submit = () => {
-  console.log('Logged in')
+const submit = async () => {
+  const response = await axios.post("/auth/login", {
+    email: form.email,
+    password: form.password
+  })
+
+  console.log(response)
 }
 </script>
