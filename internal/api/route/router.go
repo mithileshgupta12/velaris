@@ -29,7 +29,7 @@ func NewRouter(lgr logger.Logger) *Router {
 }
 
 func (r *Router) RegisterRoutes(queries repository.Querier, stores *cache.Stores, middlewares middleware.Middlewares) {
-	BoardRoutes(r.mux, queries, r.lgr)
+	BoardRoutes(r.mux, queries, r.lgr, middlewares)
 	AuthRoutes(r.mux, queries, stores.SessionStore, r.lgr, middlewares)
 }
 

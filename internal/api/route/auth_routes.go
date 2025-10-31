@@ -24,6 +24,7 @@ func AuthRoutes(
 
 		r.Group(func(r chi.Router) {
 			r.Use(middlewares.AuthMiddleware)
+
 			r.Post("/logout", authHandler.Logout)
 			r.Get("/user", authHandler.GetLoggedInUser)
 		})

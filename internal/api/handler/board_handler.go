@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
@@ -35,7 +36,9 @@ func NewBoardHandler(queries repository.Querier, lgr logger.Logger) *BoardHandle
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
-	boards, err := bh.queries.GetAllBoards(r.Context())
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	boards, err := bh.queries.GetAllBoardsByUserId(r.Context(), ctxUser.ID)
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get boards: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
@@ -62,9 +65,11 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
 	createBoardParams := repository.CreateBoardParams{
 		Name:   createBoardRequest.Name,
-		UserID: 1,
+		UserID: ctxUser.ID,
 	}
 
 	if createBoardRequest.Description == "" {
