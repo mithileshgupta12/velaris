@@ -14,6 +14,8 @@ build:
 
 run: build
 	@./target/api \
+		-app-port=$(APP_PORT) \
+		-frontend-url=$(FRONTEND_URL) \
 		-db-host=$(DB_HOST) \
 		-db-port=$(DB_PORT) \
 		-db-name=$(DB_NAME) \
