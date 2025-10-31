@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	lgr := logger.NewLogger(logger.FormatJSON)
+	lgr := logger.NewLogger()
 
 	cfg := config.NewConfig()
 

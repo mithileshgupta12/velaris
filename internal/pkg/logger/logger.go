@@ -12,11 +12,6 @@ import (
 type LogLevel int
 
 const (
-	colorReset = "\033[0m"
-	colorGreen = "\033[32m"
-)
-
-const (
 	INFO LogLevel = iota
 	DEBUG
 	ERROR
@@ -38,13 +33,6 @@ func (l LogLevel) String() string {
 	}
 }
 
-type Format int
-
-const (
-	FormatJSON Format = iota
-	FormatHuman
-)
-
 type Field struct {
 	Key   string `json:"key"`
 	Value any    `json:"value"`
@@ -64,19 +52,17 @@ type Logger interface {
 }
 
 type logger struct {
-	format Format
 }
 
 type testLogger struct {
-	format Format
 }
 
-func NewLogger(format Format) Logger {
-	return &logger{format}
+func NewLogger() Logger {
+	return &logger{}
 }
 
-func NewTestLogger(format Format) Logger {
-	return &testLogger{format}
+func NewTestLogger() Logger {
+	return &testLogger{}
 }
 
 func (l *logger) Log(logLevel LogLevel, message string, fields []*Field) {
@@ -103,12 +89,7 @@ func (l *logger) Log(logLevel LogLevel, message string, fields []*Field) {
 		entry.Caller = &caller
 	}
 
-	switch l.format {
-	case FormatJSON:
-		fmt.Println(l.formatJSON(entry))
-	case FormatHuman:
-		fmt.Println(l.formatHuman(entry))
-	}
+	fmt.Println(l.formatJSON(entry))
 
 	if logLevel == FATAL {
 		os.Exit(1)
@@ -122,16 +103,6 @@ func (l *logger) formatJSON(entry *Entry) string {
 	}
 
 	return string(data)
-}
-
-func (l *logger) formatHuman(entry *Entry) string {
-	return fmt.Sprintf("[%s] %s%s%s: %s",
-		entry.Timestamp,
-		colorGreen,
-		entry.Level,
-		colorReset,
-		entry.Message,
-	)
 }
 
 func (l *testLogger) Log(logLevel LogLevel, message string, fields []*Field) {}
