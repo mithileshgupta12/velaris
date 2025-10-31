@@ -5,6 +5,7 @@ import (
 
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
+	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type Middlewares interface {
@@ -12,10 +13,11 @@ type Middlewares interface {
 }
 
 type middlewares struct {
+	lgr          logger.Logger
 	queries      repository.Querier
 	sessionStore cache.SessionStore
 }
 
-func NewMiddlewares(queries repository.Querier, sessionStore cache.SessionStore) Middlewares {
-	return &middlewares{queries, sessionStore}
+func NewMiddlewares(lgr logger.Logger, queries repository.Querier, sessionStore cache.SessionStore) Middlewares {
+	return &middlewares{lgr, queries, sessionStore}
 }

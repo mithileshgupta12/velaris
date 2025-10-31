@@ -39,7 +39,7 @@ func main() {
 	lgr.Log(logger.INFO, "Connection to cache successful", nil)
 	defer cache.Close()
 
-	middlewares := middleware.NewMiddlewares(database.Queries, stores.SessionStore)
+	middlewares := middleware.NewMiddlewares(lgr, database.Queries, stores.SessionStore)
 
 	r := route.NewRouter(lgr)
 	r.RegisterRoutes(database.Queries, stores, middlewares)

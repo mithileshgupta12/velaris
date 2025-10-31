@@ -204,17 +204,8 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     "auth_session",
-		Value:    b64SessionID,
-		Path:     "/",
-		MaxAge:   60 * 60 * 24,
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	http.SetCookie(w, cookie)
+	isSecure := r.TLS != nil
+	helper.SetCookie(w, middleware.AuthCookieName, b64SessionID, 60*60*24, isSecure)
 
 	helper.JsonResponse(w, http.StatusOK, "Logged in successfully")
 }
@@ -233,17 +224,8 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie := &http.Cookie{
-		Name:     "auth_session",
-		Value:    "",
-		Path:     "/",
-		MaxAge:   -1,
-		HttpOnly: true,
-		Secure:   false,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	http.SetCookie(w, cookie)
+	isSecure := r.TLS != nil
+	helper.SetCookie(w, middleware.AuthCookieName, "", -1, isSecure)
 
 	helper.JsonResponse(w, http.StatusOK, "Logged out successfully")
 }
