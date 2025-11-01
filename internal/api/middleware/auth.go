@@ -26,7 +26,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		sessionCookie, err := r.Cookie(AuthCookieName)
 		if err != nil {
-			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unauthenticated")
+			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
@@ -35,7 +35,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		sessionData, err := m.sessionStore.Get(r.Context(), sessionCookie.Value)
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
-			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unauthenticated")
+			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
@@ -43,15 +43,16 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-				m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete entry from session store: %v", err), []*logger.Field{
-					{Key: "session_id", Value: sessionCookie.Value},
-					{Key: "user_id", Value: sessionData},
-				})
+				m.lgr.Log(
+					logger.ERROR,
+					fmt.Sprintf("failed to delete entry from session store: %v", err),
+					nil,
+				)
 			}
 			m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to convert userId to int: %v", err), []*logger.Field{
 				{Key: "user_id", Value: sessionData},
 			})
-			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unauthenticated")
+			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
@@ -59,12 +60,13 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-				m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete entry from session store: %v", err), []*logger.Field{
-					{Key: "session_id", Value: sessionCookie.Value},
-					{Key: "user_id", Value: userId},
-				})
+				m.lgr.Log(
+					logger.ERROR,
+					fmt.Sprintf("failed to delete entry from session store: %v", err),
+					nil,
+				)
 			}
-			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unauthenticated")
+			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
 
