@@ -84,8 +84,8 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(registerUserRequest.Password) > 72 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must not be more than 72 characters long")
+	if len(registerUserRequest.Password) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must not be more than 255 characters long")
 		return
 	}
 
@@ -94,8 +94,8 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(registerUserRequest.PasswordConfirmation) > 72 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password_confirmation must not be more than 72 characters long")
+	if len(registerUserRequest.PasswordConfirmation) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password_confirmation must not be more than 255 characters long")
 		return
 	}
 
@@ -163,8 +163,8 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(loginUserRequest.Password) > 72 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must not be more than 72 characters long")
+	if len(loginUserRequest.Password) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "password must not be more than 255 characters long")
 		return
 	}
 
