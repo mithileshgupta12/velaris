@@ -214,7 +214,7 @@ func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("auth_session")
 	if err != nil {
 		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get session cookie: %v", err), nil)
-		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unautenticated")
 		return
 	}
 
