@@ -25,6 +25,7 @@ func NewRouter(lgr logger.Logger, frontendUrl string) *Router {
 	mux.Use(chiMiddlewares.RealIP)
 	mux.Use(chiMiddlewares.Logger)
 	mux.Use(chiMiddlewares.Recoverer)
+	mux.Use(middleware.LimitBodySize(1024 * 1024))
 
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{frontendUrl},
