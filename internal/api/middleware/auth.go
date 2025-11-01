@@ -49,9 +49,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 					nil,
 				)
 			}
-			m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to convert userId to int: %v", err), []*logger.Field{
-				{Key: "user_id", Value: sessionData},
-			})
+			m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to convert userId to int: %v", err), nil)
 			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
