@@ -41,9 +41,9 @@ func main() {
 
 	middlewares := middleware.NewMiddlewares(lgr, database.Queries, stores.SessionStore)
 
-	r := route.NewRouter(lgr)
+	r := route.NewRouter(lgr, cfg.App.FrontendUrl)
 	r.RegisterRoutes(database.Queries, stores, middlewares)
-	if err := r.Serve(8000); err != nil {
+	if err := r.Serve(cfg.App.Port); err != nil {
 		lgr.Log(logger.FATAL, fmt.Sprintf("failed to start server: %v", err), nil)
 	}
 }

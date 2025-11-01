@@ -18,7 +18,7 @@ type Router struct {
 	lgr logger.Logger
 }
 
-func NewRouter(lgr logger.Logger) *Router {
+func NewRouter(lgr logger.Logger, frontendUrl string) *Router {
 	mux := chi.NewRouter()
 
 	mux.Use(chiMiddlewares.RequestID)
@@ -27,7 +27,7 @@ func NewRouter(lgr logger.Logger) *Router {
 	mux.Use(chiMiddlewares.Recoverer)
 
 	mux.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://*", "https://*"},
+		AllowedOrigins:   []string{frontendUrl},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
