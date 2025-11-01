@@ -65,6 +65,16 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(createBoardRequest.Name) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name must not be more than 255 characters long")
+		return
+	}
+
+	if len(createBoardRequest.Description) > 10000 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "description must not be more than 10,000 characters long")
+		return
+	}
+
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
 	createBoardParams := repository.CreateBoardParams{
@@ -103,7 +113,12 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	board, err := bh.queries.GetBoardById(r.Context(), int64(id))
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	board, err := bh.queries.GetBoardByIdAndUserId(r.Context(), repository.GetBoardByIdAndUserIdParams{
+		ID:     int64(id),
+		UserID: ctxUser.ID,
+	})
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
@@ -145,9 +160,22 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updateBoardByIdParams := repository.UpdateBoardByIdParams{
-		ID:   int64(id),
-		Name: updateBoardRequest.Name,
+	if len(updateBoardRequest.Name) > 255 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name must not be more than 255 characters long")
+		return
+	}
+
+	if len(updateBoardRequest.Description) > 10000 {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, "description must not be more than 10,000 characters long")
+		return
+	}
+
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	updateBoardByIdParams := repository.UpdateBoardByIdAndUserIdParams{
+		ID:     int64(id),
+		UserID: ctxUser.ID,
+		Name:   updateBoardRequest.Name,
 	}
 
 	if updateBoardRequest.Description == "" {
@@ -162,7 +190,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	board, err := bh.queries.UpdateBoardById(r.Context(), updateBoardByIdParams)
+	board, err := bh.queries.UpdateBoardByIdAndUserId(r.Context(), updateBoardByIdParams)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
@@ -188,7 +216,12 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rowsAffected, err := bh.queries.DeleteBoardById(r.Context(), int64(id))
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	rowsAffected, err := bh.queries.DeleteBoardByIdAndUserId(r.Context(), repository.DeleteBoardByIdAndUserIdParams{
+		ID:     int64(id),
+		UserID: ctxUser.ID,
+	})
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
 			{Key: "board_id", Value: id},
