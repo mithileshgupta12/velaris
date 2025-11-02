@@ -54,7 +54,12 @@ const useAuth = () => {
     }
   }
 
-  const register = async (data: {
+  const register = async ({
+    name,
+    email,
+    password,
+    passwordConfirmation,
+  }: {
     name: string
     email: string
     password: string
@@ -64,7 +69,12 @@ const useAuth = () => {
     error.value = null
 
     try {
-      await axios.post('/auth/register', data)
+      await axios.post('/auth/register', {
+        name,
+        email,
+        password,
+        password_confirmation: passwordConfirmation,
+      })
 
       router.push('/auth/login')
     } catch (e) {
