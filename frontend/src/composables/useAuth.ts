@@ -4,12 +4,14 @@ import { AxiosError } from 'axios'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-interface ISuccessResponse {
+interface ILoginSuccessResponse {
   success: boolean
   data: {
     id: number
     name: string
     email: string
+    created_at: string
+    updated_at: string
   }
 }
 
@@ -30,12 +32,14 @@ const useAuth = () => {
     error.value = null
 
     try {
-      const response = await axios.post<ISuccessResponse>('/auth/login', data)
+      const response = await axios.post<ILoginSuccessResponse>('/auth/login', data)
 
       setLoggedInUser({
         id: response.data.data.id,
         name: response.data.data.name,
         email: response.data.data.email,
+        createdAt: response.data.data.created_at,
+        updatedAt: response.data.data.updated_at,
       })
 
       router.push('/dashboard')
@@ -60,7 +64,7 @@ const useAuth = () => {
     error.value = null
 
     try {
-      await axios.post<ISuccessResponse>('/auth/register', data)
+      await axios.post('/auth/register', data)
 
       router.push('/auth/login')
     } catch (e) {

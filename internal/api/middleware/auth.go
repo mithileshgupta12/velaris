@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
@@ -15,9 +16,11 @@ type ctxUserKey string
 const CtxUserKey ctxUserKey = "ctxUser"
 
 type CtxUser struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 const AuthCookieName = "auth_session"
@@ -69,9 +72,11 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctxUser := CtxUser{
-			ID:    user.ID,
-			Name:  user.Name,
-			Email: user.Email,
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		}
 
 		ctx := context.WithValue(r.Context(), CtxUserKey, ctxUser)

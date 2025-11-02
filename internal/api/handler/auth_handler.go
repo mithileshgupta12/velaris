@@ -116,12 +116,11 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ah.queries.CreateUser(r.Context(), repository.CreateUserParams{
+	if _, err := ah.queries.CreateUser(r.Context(), repository.CreateUserParams{
 		Name:     registerUserRequest.Name,
 		Email:    registerUserRequest.Email,
 		Password: hashedPassword,
-	})
-	if err != nil {
+	}); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == "23505" && pgErr.ConstraintName == "users_email_key" {
@@ -134,7 +133,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helper.JsonResponse(w, http.StatusCreated, user)
+	helper.JsonResponse(w, http.StatusCreated, "User registered successfully")
 }
 
 func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -207,17 +206,15 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	isSecure := r.TLS != nil
 	helper.SetCookie(w, middleware.AuthCookieName, b64SessionID, 60*60*24, isSecure)
 
-	userWithoutPassword := struct {
-		ID    int64  `json:"id"`
-		Name  string `json:"name"`
-		Email string `json:"email"`
-	}{
-		ID:    user.ID,
-		Name:  user.Name,
-		Email: user.Email,
+	userResponse := middleware.CtxUser{
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
 
-	helper.JsonResponse(w, http.StatusOK, userWithoutPassword)
+	helper.JsonResponse(w, http.StatusOK, userResponse)
 }
 
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
