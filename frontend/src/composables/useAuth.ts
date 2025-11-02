@@ -1,10 +1,22 @@
+import { useAuthStore } from '@/stores/authStore'
 import axios from '@/utils/axios'
 import { AxiosError } from 'axios'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+interface ISuccessResponse {
+  success: boolean
+  data: {
+    id: number
+    name: string
+    email: string
+  }
+}
+
 const useAuth = () => {
   const router = useRouter()
+
+  const { setLoggedInUser } = useAuthStore()
 
   const loading = ref(false)
   const error = ref<string | null>(null)
@@ -18,7 +30,13 @@ const useAuth = () => {
     error.value = null
 
     try {
-      await axios.post('/auth/login', data)
+      const response = await axios.post<ISuccessResponse>('/auth/login', data)
+
+      setLoggedInUser({
+        id: response.data.data.id,
+        name: response.data.data.name,
+        email: response.data.data.email,
+      })
 
       router.push('/dashboard')
     } catch (e) {
@@ -42,7 +60,7 @@ const useAuth = () => {
     error.value = null
 
     try {
-      await axios.post('/auth/register', data)
+      await axios.post<ISuccessResponse>('/auth/register', data)
 
       router.push('/auth/login')
     } catch (e) {

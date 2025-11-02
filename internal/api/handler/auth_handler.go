@@ -207,7 +207,17 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	isSecure := r.TLS != nil
 	helper.SetCookie(w, middleware.AuthCookieName, b64SessionID, 60*60*24, isSecure)
 
-	helper.JsonResponse(w, http.StatusOK, "Logged in successfully")
+	userWithoutPassword := struct {
+		ID    int64  `json:"id"`
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}{
+		ID:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}
+
+	helper.JsonResponse(w, http.StatusOK, userWithoutPassword)
 }
 
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
