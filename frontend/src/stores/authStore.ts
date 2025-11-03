@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-interface IUser {
+export interface ILoggedInUser {
   id: number
   name: string
   email: string
@@ -10,11 +10,11 @@ interface IUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const loggedInUser = ref<IUser | null>(null)
+  const loggedInUser = ref<ILoggedInUser | null>(null)
 
   const isLoggedIn = computed(() => !!loggedInUser.value)
 
-  const setLoggedInUser = (payload: IUser) => {
+  const setLoggedInUser = (payload: ILoggedInUser) => {
     loggedInUser.value = payload
   }
 
