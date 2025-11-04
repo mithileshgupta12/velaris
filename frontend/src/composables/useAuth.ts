@@ -31,14 +31,7 @@ const useAuth = () => {
     try {
       const response = await axios.post<ISuccessResponse>('/auth/login', data)
 
-      authStore.setLoggedInUser({
-        id: response.data.data.id,
-        name: response.data.data.name,
-        email: response.data.data.email,
-        createdAt: response.data.data.created_at,
-        updatedAt: response.data.data.updated_at,
-      })
-
+      mapResponse(response.data)
       return true
     } catch (e) {
       if (e instanceof AxiosError) {
@@ -102,13 +95,7 @@ const useAuth = () => {
     try {
       const response = await axios.get<ISuccessResponse>('/auth/user')
 
-      authStore.setLoggedInUser({
-        id: response.data.data.id,
-        name: response.data.data.name,
-        email: response.data.data.email,
-        createdAt: response.data.data.created_at,
-        updatedAt: response.data.data.updated_at,
-      })
+      mapResponse(response.data)
     } catch (e) {
       if (e instanceof AxiosError) {
         error.value = e.response?.data.error.message || 'Internal server error'
@@ -123,6 +110,16 @@ const useAuth = () => {
 
     authStore.setInitialized(true)
     return isLoggedIn.value
+  }
+
+  const mapResponse = (payload: ISuccessResponse) => {
+    authStore.setLoggedInUser({
+      id: payload.data.id,
+      name: payload.data.name,
+      email: payload.data.email,
+      createdAt: payload.data.created_at,
+      updatedAt: payload.data.updated_at,
+    })
   }
 
   return {
