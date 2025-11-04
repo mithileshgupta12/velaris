@@ -1,6 +1,7 @@
 import { useAuthStore } from '@/stores/authStore'
 import axios from '@/utils/axios'
 import { AxiosError } from 'axios'
+import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -18,14 +19,13 @@ interface ISuccessResponse {
 const useAuth = () => {
   const router = useRouter()
 
-  const { setLoggedInUser } = useAuthStore()
+  const authStore = useAuthStore()
+  const { isLoggedIn, initialized } = storeToRefs(authStore)
 
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const isLoading = computed(() => loading.value)
   const isError = computed(() => !!error.value)
-  const errorMessage = computed(() => error.value)
 
   const login = async (data: { email: string; password: string }) => {
     loading.value = true
@@ -34,7 +34,7 @@ const useAuth = () => {
     try {
       const response = await axios.post<ISuccessResponse>('/auth/login', data)
 
-      setLoggedInUser({
+      authStore.setLoggedInUser({
         id: response.data.data.id,
         name: response.data.data.name,
         email: response.data.data.email,
@@ -49,6 +49,8 @@ const useAuth = () => {
       } else {
         error.value = 'Internal server error'
       }
+
+      authStore.setLoggedInUser(null)
     } finally {
       loading.value = false
     }
@@ -88,32 +90,47 @@ const useAuth = () => {
     }
   }
 
-  const getLoggedInUser = async () => {
+  const checkAuth = async (): Promise<boolean> => {
+    if (initialized.value) {
+      return isLoggedIn.value
+    }
+
     loading.value = true
     error.value = null
 
     try {
       const response = await axios.get<ISuccessResponse>('/auth/user')
 
-      console.log(response.data)
+      authStore.setLoggedInUser({
+        id: response.data.data.id,
+        name: response.data.data.name,
+        email: response.data.data.email,
+        createdAt: response.data.data.created_at,
+        updatedAt: response.data.data.updated_at,
+      })
     } catch (e) {
       if (e instanceof AxiosError) {
         error.value = e.response?.data.error.message || 'Internal server error'
       } else {
         error.value = 'Internal server error'
       }
+
+      authStore.setLoggedInUser(null)
     } finally {
       loading.value = false
     }
+
+    authStore.setInitialized(true)
+    return isLoggedIn.value
   }
 
   return {
     login,
     register,
-    getLoggedInUser,
-    isLoading,
+    checkAuth,
+    loading,
     isError,
-    errorMessage,
+    error,
   }
 }
 

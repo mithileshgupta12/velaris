@@ -1,7 +1,7 @@
 <template>
   <h1>Login</h1>
 
-  <p v-if="isError">{{ errorMessage }}</p>
+  <p v-if="isError">{{ error }}</p>
 
   <label for="email">Email</label>
   <input type="email" name="email" id="email" v-model="form.email" />
@@ -9,8 +9,8 @@
   <input type="password" name="password" id="password" v-model="form.password" />
   <input
     type="submit"
-    :value="isLoading ? 'Loading...' : 'Login'"
-    :disabled="isLoading"
+    :value="loading ? 'Loading...' : 'Login'"
+    :disabled="loading"
     @click="handleLogin"
   />
 </template>
@@ -19,7 +19,7 @@
 import useAuth from '@/composables/useAuth'
 import { reactive } from 'vue'
 
-const { login, isLoading, isError, errorMessage } = useAuth()
+const { login, loading, isError, error } = useAuth()
 
 const form = reactive({
   email: '',

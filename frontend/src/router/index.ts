@@ -4,6 +4,7 @@ import RegisterView from '@/views/auth/RegisterView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import HomeView from '@/views/HomeView.vue'
 import { useAuthStore } from '@/stores/authStore'
+import useAuth from '@/composables/useAuth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -20,10 +21,12 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(() => {
-  const { checkAuth } = useAuthStore()
+router.beforeEach(async () => {
+  const { checkAuth } = useAuth()
 
-  checkAuth()
+  const isLoggedIn = await checkAuth()
+
+  console.log(isLoggedIn)
 })
 
 export default router

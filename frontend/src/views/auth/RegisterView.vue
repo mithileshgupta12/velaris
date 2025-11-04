@@ -1,7 +1,7 @@
 <template>
   <h1>Register</h1>
 
-  <p v-if="isError">{{ errorMessage }}</p>
+  <p v-if="isError">{{ error }}</p>
 
   <form>
     <label for="name">Name</label>
@@ -19,8 +19,8 @@
     />
     <input
       type="submit"
-      :value="isLoading ? 'Loading...' : 'Register'"
-      :disabled="isLoading"
+      :value="loading ? 'Loading...' : 'Register'"
+      :disabled="loading"
       @click="handleRegister"
     />
   </form>
@@ -30,7 +30,7 @@
 import useAuth from '@/composables/useAuth'
 import { reactive } from 'vue'
 
-const { register, isLoading, isError, errorMessage } = useAuth()
+const { register, loading, isError, error } = useAuth()
 
 const form = reactive({
   name: '',

@@ -15,24 +15,19 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isLoggedIn = computed(() => !!loggedInUser.value)
 
-  const setLoggedInUser = (payload: ILoggedInUser) => {
+  const setLoggedInUser = (payload: ILoggedInUser | null) => {
     loggedInUser.value = payload
   }
 
-  const checkAuth = async () => {
-    if (!initialized.value) {
-      console.log('First try')
-      initialized.value = true
-      return
-    }
-
-    console.log('Not first try')
+  const setInitialized = (payload: boolean) => {
+    initialized.value = payload
   }
 
   return {
     loggedInUser,
     isLoggedIn,
+    initialized,
     setLoggedInUser,
-    checkAuth,
+    setInitialized,
   }
 })
