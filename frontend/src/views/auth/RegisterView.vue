@@ -29,8 +29,10 @@
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
 import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
 const { register, loading, isError, error } = useAuth()
+const router = useRouter()
 
 const form = reactive({
   name: '',
@@ -40,11 +42,15 @@ const form = reactive({
 })
 
 const handleRegister = async () => {
-  await register({
+  const response = await register({
     name: form.name,
     email: form.email,
     password: form.password,
     passwordConfirmation: form.passwordConfirmation,
   })
+
+  if (response) {
+    router.push({ name: 'auth.login' })
+  }
 }
 </script>

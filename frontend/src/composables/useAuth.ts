@@ -3,7 +3,6 @@ import axios from '@/utils/axios'
 import { AxiosError } from 'axios'
 import { storeToRefs } from 'pinia'
 import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
 
 interface ISuccessResponse {
   success: boolean
@@ -17,8 +16,6 @@ interface ISuccessResponse {
 }
 
 const useAuth = () => {
-  const router = useRouter()
-
   const authStore = useAuthStore()
   const { isLoggedIn, initialized } = storeToRefs(authStore)
 
@@ -27,7 +24,7 @@ const useAuth = () => {
 
   const isError = computed(() => !!error.value)
 
-  const login = async (data: { email: string; password: string }) => {
+  const login = async (data: { email: string; password: string }): Promise<boolean> => {
     loading.value = true
     error.value = null
 
@@ -42,7 +39,7 @@ const useAuth = () => {
         updatedAt: response.data.data.updated_at,
       })
 
-      router.push('/dashboard')
+      return true
     } catch (e) {
       if (e instanceof AxiosError) {
         error.value = e.response?.data.error.message || 'Internal server error'
@@ -54,6 +51,8 @@ const useAuth = () => {
     } finally {
       loading.value = false
     }
+
+    return false
   }
 
   const register = async ({
@@ -66,7 +65,7 @@ const useAuth = () => {
     email: string
     password: string
     passwordConfirmation: string
-  }) => {
+  }): Promise<boolean> => {
     loading.value = true
     error.value = null
 
@@ -78,7 +77,7 @@ const useAuth = () => {
         password_confirmation: passwordConfirmation,
       })
 
-      router.push('/auth/login')
+      return true
     } catch (e) {
       if (e instanceof AxiosError) {
         error.value = e.response?.data.error.message || 'Internal server error'
@@ -88,6 +87,8 @@ const useAuth = () => {
     } finally {
       loading.value = false
     }
+
+    return false
   }
 
   const checkAuth = async (): Promise<boolean> => {

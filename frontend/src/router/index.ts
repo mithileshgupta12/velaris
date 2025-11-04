@@ -3,7 +3,6 @@ import LoginView from '@/views/auth/LoginView.vue'
 import RegisterView from '@/views/auth/RegisterView.vue'
 import DashboardView from '@/views/DashboardView.vue'
 import HomeView from '@/views/HomeView.vue'
-import { useAuthStore } from '@/stores/authStore'
 import useAuth from '@/composables/useAuth'
 
 const router = createRouter({
@@ -21,12 +20,16 @@ const router = createRouter({
   ],
 })
 
-router.beforeEach(async () => {
+router.beforeEach(async (to) => {
   const { checkAuth } = useAuth()
 
   const isLoggedIn = await checkAuth()
 
-  console.log(isLoggedIn)
+  const guestRoutes = ['auth.register', 'auth.login', 'home']
+
+  if (!guestRoutes.includes(to.name as string) && !isLoggedIn) {
+    return { name: 'auth.login' }
+  }
 })
 
 export default router

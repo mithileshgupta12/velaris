@@ -18,8 +18,10 @@
 <script setup lang="ts">
 import useAuth from '@/composables/useAuth'
 import { reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
 const { login, loading, isError, error } = useAuth()
+const router = useRouter()
 
 const form = reactive({
   email: '',
@@ -27,9 +29,13 @@ const form = reactive({
 })
 
 const handleLogin = async () => {
-  await login({
+  const response = await login({
     email: form.email,
     password: form.password,
   })
+
+  if (response) {
+    router.push({ name: 'dashboard' })
+  }
 }
 </script>
