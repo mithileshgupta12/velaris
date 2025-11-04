@@ -10,6 +10,7 @@ export interface ILoggedInUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
+  const initialized = ref<boolean>(false)
   const loggedInUser = ref<ILoggedInUser | null>(null)
 
   const isLoggedIn = computed(() => !!loggedInUser.value)
@@ -18,9 +19,20 @@ export const useAuthStore = defineStore('auth', () => {
     loggedInUser.value = payload
   }
 
+  const checkAuth = async () => {
+    if (!initialized.value) {
+      console.log('First try')
+      initialized.value = true
+      return
+    }
+
+    console.log('Not first try')
+  }
+
   return {
     loggedInUser,
     isLoggedIn,
     setLoggedInUser,
+    checkAuth,
   }
 })

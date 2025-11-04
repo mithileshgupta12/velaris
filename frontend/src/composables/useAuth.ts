@@ -4,7 +4,7 @@ import { AxiosError } from 'axios'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-interface ILoginSuccessResponse {
+interface ISuccessResponse {
   success: boolean
   data: {
     id: number
@@ -32,7 +32,7 @@ const useAuth = () => {
     error.value = null
 
     try {
-      const response = await axios.post<ILoginSuccessResponse>('/auth/login', data)
+      const response = await axios.post<ISuccessResponse>('/auth/login', data)
 
       setLoggedInUser({
         id: response.data.data.id,
@@ -88,9 +88,29 @@ const useAuth = () => {
     }
   }
 
+  const getLoggedInUser = async () => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await axios.get<ISuccessResponse>('/auth/user')
+
+      console.log(response.data)
+    } catch (e) {
+      if (e instanceof AxiosError) {
+        error.value = e.response?.data.error.message || 'Internal server error'
+      } else {
+        error.value = 'Internal server error'
+      }
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     login,
     register,
+    getLoggedInUser,
     isLoading,
     isError,
     errorMessage,

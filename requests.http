@@ -1,0 +1,21 @@
+@baseUrl = http://localhost:8000
+@contentType = application/json
+
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+    "email": "bob@aol.com",
+    "password": "password"
+}
+
+###
+
+POST {{baseUrl}}/auth/register
+Content-Type: {{contentType}}
+
+{
+    "name": "Bob Johnson",
+    "email": "bob@aol.com",
+    "password": "password"
+}
