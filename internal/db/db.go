@@ -8,6 +8,7 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/config"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"xorm.io/xorm"
+	"xorm.io/xorm/names"
 )
 
 var (
@@ -28,6 +29,8 @@ func NewDB(dbFlags *config.DBFlags) (*repository.Repository, error) {
 		if instanceErr != nil {
 			return
 		}
+
+		engine.SetColumnMapper(names.GonicMapper{})
 
 		instanceErr = engine.Ping()
 		if instanceErr != nil {

@@ -17,5 +17,6 @@ Content-Type: {{contentType}}
 {
     "name": "Bob Johnson",
     "email": "bob@aol.com",
-    "password": "password"
+    "password": "password",
+    "password_confirmation": "password"
 }

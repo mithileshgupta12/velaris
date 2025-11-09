@@ -11,3 +11,7 @@ type Board struct {
 	CreatedAt   time.Time `xorm:"timestamptz NOT NULL created" json:"created_at"`
 	UpdatedAt   time.Time `xorm:"timestamptz NOT NULL updated" json:"updated_at"`
 }
+
+func (b *Board) TableName() string {
+	return "boards"
+}

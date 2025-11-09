@@ -8,6 +8,10 @@ type User struct {
 	Email     string    `xorm:"NOT NULL UNIQUE"`
 	Password  string    `xorm:"NOT NULL" json:"-"`
 	Boards    []*Board  `xorm:"-"`
-	CreatedAt time.Time `xorm:"timestamptz NOT NULL created"`
-	UpdatedAt time.Time `xorm:"timestamptz NOT NULL updated"`
+	CreatedAt time.Time `xorm:"NOT NULL created"`
+	UpdatedAt time.Time `xorm:"NOT NULL updated"`
+}
+
+func (u *User) TableName() string {
+	return "users"
 }
