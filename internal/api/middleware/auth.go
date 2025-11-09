@@ -57,7 +57,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := m.repositories.UserRepository.GetUserById(r.Context(), int64(userId))
+		user, err := m.repositories.UserRepository.GetUserById(int64(userId))
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
@@ -72,7 +72,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		}
 
 		ctxUser := CtxUser{
-			ID:        user.ID,
+			ID:        user.Id,
 			Name:      user.Name,
 			Email:     user.Email,
 			CreatedAt: user.CreatedAt,
