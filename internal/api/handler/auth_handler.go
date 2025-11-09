@@ -33,13 +33,13 @@ type LoginUserRequest struct {
 }
 
 type AuthHandler struct {
-	queries      repository.Querier
-	sessionStore cache.SessionStore
-	lgr          logger.Logger
+	userRepository repository.UserRepository
+	sessionStore   cache.SessionStore
+	lgr            logger.Logger
 }
 
-func NewAuthHandler(queries repository.Querier, sessionStore cache.SessionStore, lgr logger.Logger) *AuthHandler {
-	return &AuthHandler{queries, sessionStore, lgr}
+func NewAuthHandler(userRepository repository.UserRepository, sessionStore cache.SessionStore, lgr logger.Logger) *AuthHandler {
+	return &AuthHandler{userRepository, sessionStore, lgr}
 }
 
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {

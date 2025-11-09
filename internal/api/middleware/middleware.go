@@ -14,10 +14,10 @@ type Middlewares interface {
 
 type middlewares struct {
 	lgr          logger.Logger
-	queries      repository.Querier
+	repositories *repository.Repository
 	sessionStore cache.SessionStore
 }
 
-func NewMiddlewares(lgr logger.Logger, queries repository.Querier, sessionStore cache.SessionStore) Middlewares {
-	return &middlewares{lgr, queries, sessionStore}
+func NewMiddlewares(lgr logger.Logger, repositories *repository.Repository, sessionStore cache.SessionStore) Middlewares {
+	return &middlewares{lgr, repositories, sessionStore}
 }

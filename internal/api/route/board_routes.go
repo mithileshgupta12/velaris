@@ -8,8 +8,8 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
-func BoardRoutes(r *chi.Mux, queries repository.Querier, lgr logger.Logger, middlewares middleware.Middlewares) {
-	boardHandler := handler.NewBoardHandler(queries, lgr)
+func BoardRoutes(r *chi.Mux, boardRepository repository.BoardRepository, lgr logger.Logger, middlewares middleware.Middlewares) {
+	boardHandler := handler.NewBoardHandler(boardRepository, lgr)
 
 	r.Route("/boards", func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware)

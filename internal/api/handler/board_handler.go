@@ -2,14 +2,13 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
@@ -27,18 +26,18 @@ type UpdateBoardRequest struct {
 }
 
 type BoardHandler struct {
-	queries repository.Querier
-	lgr     logger.Logger
+	boardRepository repository.BoardRepository
+	lgr             logger.Logger
 }
 
-func NewBoardHandler(queries repository.Querier, lgr logger.Logger) *BoardHandler {
-	return &BoardHandler{queries, lgr}
+func NewBoardHandler(boardRepository repository.BoardRepository, lgr logger.Logger) *BoardHandler {
+	return &BoardHandler{boardRepository, lgr}
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
-	boards, err := bh.queries.GetAllBoardsByUserId(r.Context(), ctxUser.ID)
+	boards, err := bh.boardRepository.GetAllBoardsByUserId(ctxUser.ID)
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get boards: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
@@ -77,24 +76,18 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
-	createBoardParams := repository.CreateBoardParams{
+	createBoardArgs := &repository.CreateBoardArgs{
 		Name:   createBoardRequest.Name,
-		UserID: ctxUser.ID,
+		UserId: ctxUser.ID,
 	}
 
 	if createBoardRequest.Description == "" {
-		createBoardParams.Description = pgtype.Text{
-			String: "",
-			Valid:  false,
-		}
+		createBoardArgs.Description = nil
 	} else {
-		createBoardParams.Description = pgtype.Text{
-			String: createBoardRequest.Description,
-			Valid:  true,
-		}
+		createBoardArgs.Description = &createBoardRequest.Description
 	}
 
-	board, err := bh.queries.CreateBoard(r.Context(), createBoardParams)
+	board, err := bh.boardRepository.CreateBoard(createBoardArgs)
 	if err != nil {
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create board: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
@@ -115,12 +108,12 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
-	board, err := bh.queries.GetBoardByIdAndUserId(r.Context(), repository.GetBoardByIdAndUserIdParams{
-		ID:     int64(id),
-		UserID: ctxUser.ID,
+	board, err := bh.boardRepository.GetBoardByIdAndUserId(&repository.GetBoardByIdAndUserIdArgs{
+		Id:     int64(id),
+		UserId: ctxUser.ID,
 	})
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, repository.ErrBoardNotFound) {
 			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
 			return
 		}
@@ -172,27 +165,21 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
-	updateBoardByIdParams := repository.UpdateBoardByIdAndUserIdParams{
-		ID:     int64(id),
-		UserID: ctxUser.ID,
+	updateBoardByIdArgs := &repository.UpdateBoardByIdAndUserIdArgs{
+		Id:     int64(id),
+		UserId: ctxUser.ID,
 		Name:   updateBoardRequest.Name,
 	}
 
 	if updateBoardRequest.Description == "" {
-		updateBoardByIdParams.Description = pgtype.Text{
-			String: "",
-			Valid:  false,
-		}
+		updateBoardByIdArgs.Description = nil
 	} else {
-		updateBoardByIdParams.Description = pgtype.Text{
-			String: updateBoardRequest.Description,
-			Valid:  true,
-		}
+		updateBoardByIdArgs.Description = &updateBoardRequest.Description
 	}
 
-	board, err := bh.queries.UpdateBoardByIdAndUserId(r.Context(), updateBoardByIdParams)
+	board, err := bh.boardRepository.UpdateBoardByIdAndUserId(updateBoardByIdArgs)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, repository.ErrBoardNotFound) {
 			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
 			return
 		}
@@ -218,20 +205,20 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
-	rowsAffected, err := bh.queries.DeleteBoardByIdAndUserId(r.Context(), repository.DeleteBoardByIdAndUserIdParams{
-		ID:     int64(id),
-		UserID: ctxUser.ID,
+	err = bh.boardRepository.DeleteBoardByIdAndUserId(&repository.DeleteBoardByIdAndUserIdArgs{
+		Id:     int64(id),
+		UserId: ctxUser.ID,
 	})
 	if err != nil {
+		if errors.Is(err, repository.ErrBoardNotFound) {
+			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
+			return
+		}
+
 		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
 			{Key: "board_id", Value: id},
 		})
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
-		return
-	}
-
-	if rowsAffected == 0 {
-		helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
 		return
 	}
 

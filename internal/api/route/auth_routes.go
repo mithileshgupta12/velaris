@@ -11,12 +11,12 @@ import (
 
 func AuthRoutes(
 	r *chi.Mux,
-	queries repository.Querier,
+	userRepository repository.UserRepository,
 	sessionStore cache.SessionStore,
 	lgr logger.Logger,
 	middlewares middleware.Middlewares,
 ) {
-	authHandler := handler.NewAuthHandler(queries, sessionStore, lgr)
+	authHandler := handler.NewAuthHandler(userRepository, sessionStore, lgr)
 
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", authHandler.Register)

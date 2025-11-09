@@ -39,9 +39,9 @@ func NewRouter(lgr logger.Logger, frontendUrl string) *Router {
 	return &Router{mux, lgr}
 }
 
-func (r *Router) RegisterRoutes(queries repository.Querier, stores *cache.Stores, middlewares middleware.Middlewares) {
-	BoardRoutes(r.mux, queries, r.lgr, middlewares)
-	AuthRoutes(r.mux, queries, stores.SessionStore, r.lgr, middlewares)
+func (r *Router) RegisterRoutes(repositories *repository.Repository, stores *cache.Stores, middlewares middleware.Middlewares) {
+	BoardRoutes(r.mux, repositories.BoardRepository, r.lgr, middlewares)
+	AuthRoutes(r.mux, repositories.UserRepository, stores.SessionStore, r.lgr, middlewares)
 }
 
 func (r *Router) Serve(port int) error {

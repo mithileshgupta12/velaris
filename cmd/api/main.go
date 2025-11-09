@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
@@ -17,17 +16,12 @@ func main() {
 
 	cfg := config.NewConfig()
 
-	database, err := db.NewDB(&cfg.DB)
+	repositories, err := db.NewDB(&cfg.DB)
 	if err != nil {
 		lgr.Log(logger.FATAL, fmt.Sprintf("failed to connect to database: %v", err), nil)
 	}
 
-	if err := database.Ping(context.Background()); err != nil {
-		lgr.Log(logger.FATAL, fmt.Sprintf("failed to ping database: %v", err), nil)
-	}
-
 	lgr.Log(logger.INFO, "Connection to database successful", nil)
-	defer database.Close()
 
 	cache, err := cache.NewRedisClient()
 	if err != nil {
@@ -39,10 +33,10 @@ func main() {
 	lgr.Log(logger.INFO, "Connection to cache successful", nil)
 	defer cache.Close()
 
-	middlewares := middleware.NewMiddlewares(lgr, database.Queries, stores.SessionStore)
+	middlewares := middleware.NewMiddlewares(lgr, repositories, stores.SessionStore)
 
 	r := route.NewRouter(lgr, cfg.App.FrontendUrl)
-	r.RegisterRoutes(database.Queries, stores, middlewares)
+	r.RegisterRoutes(repositories, stores, middlewares)
 	if err := r.Serve(cfg.App.Port); err != nil {
 		lgr.Log(logger.FATAL, fmt.Sprintf("failed to start server: %v", err), nil)
 	}

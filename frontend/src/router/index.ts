@@ -23,12 +23,14 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const { checkAuth } = useAuth()
 
-  const isLoggedIn = await checkAuth()
-
   const guestRoutes = ['auth.register', 'auth.login', 'home']
 
-  if (!guestRoutes.includes(to.name as string) && !isLoggedIn) {
-    return { name: 'auth.login' }
+  if (!guestRoutes.includes(to.name as string)) {
+    const isLoggedIn = await checkAuth()
+
+    if (!isLoggedIn) {
+      return { name: 'auth.login' }
+    }
   }
 })
 
