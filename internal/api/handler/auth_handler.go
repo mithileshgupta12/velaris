@@ -11,8 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/lib/pq"
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
@@ -116,14 +115,13 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := ah.queries.CreateUser(r.Context(), repository.CreateUserParams{
+	if err := ah.userRepository.CreateUser(&repository.CreateUserArgs{
 		Name:     registerUserRequest.Name,
 		Email:    registerUserRequest.Email,
 		Password: hashedPassword,
 	}); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == "23505" && pgErr.ConstraintName == "users_email_key" {
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == "23505" && pqErr.Constraint == "users_email_key" {
 				helper.ErrorJsonResponse(w, http.StatusConflict, "email is already taken")
 				return
 			}
@@ -167,9 +165,9 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := ah.queries.GetUserByEmail(r.Context(), loginUserRequest.Email)
+	user, err := ah.userRepository.GetUserByEmail(loginUserRequest.Email)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, repository.ErrUserNotFound) {
 			helper.ErrorJsonResponse(w, http.StatusBadRequest, "username or password is invalid")
 			return
 		}
@@ -197,7 +195,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	b64SessionID := base64.RawURLEncoding.EncodeToString(sessionID)
 
-	if err := ah.sessionStore.Set(r.Context(), b64SessionID, user.ID, time.Duration(time.Hour*24)); err != nil {
+	if err := ah.sessionStore.Set(r.Context(), b64SessionID, user.Id, time.Duration(time.Hour*24)); err != nil {
 		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to set value in session store: %v", err), nil)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -207,7 +205,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	helper.SetCookie(w, middleware.AuthCookieName, b64SessionID, 60*60*24, isSecure)
 
 	userResponse := middleware.CtxUser{
-		ID:        user.ID,
+		ID:        user.Id,
 		Name:      user.Name,
 		Email:     user.Email,
 		CreatedAt: user.CreatedAt,
