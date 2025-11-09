@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	_ "github.com/lib/pq"
@@ -25,13 +24,17 @@ func NewDB(dbFlags *config.DBFlags) (*repository.Repository, error) {
 			dbFlags.Host, dbFlags.PORT, dbFlags.User, dbFlags.Password, dbFlags.Name, dbFlags.SSLMode,
 		)
 
-		engine, instanceErr = xorm.NewEngine("pq", connStr)
+		engine, instanceErr = xorm.NewEngine("postgres", connStr)
+		if instanceErr != nil {
+			return
+		}
+
+		instanceErr = engine.Ping()
+		if instanceErr != nil {
+			return
+		}
 
 		repositories = repository.NewRepository(engine)
-
-		if err := engine.Ping(); err != nil {
-			log.Println(err)
-		}
 	})
 
 	return repositories, instanceErr
