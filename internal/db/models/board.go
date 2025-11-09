@@ -8,8 +8,8 @@ type Board struct {
 	Description *string   `xorm:"TEXT" json:"description"`
 	UserId      int64     `xorm:"INDEX" json:"user_id"`
 	User        *User     `xorm:"-" json:"user"`
-	CreatedAt   time.Time `xorm:"timestamptz NOT NULL created" json:"created_at"`
-	UpdatedAt   time.Time `xorm:"timestamptz NOT NULL updated" json:"updated_at"`
+	CreatedAt   time.Time `xorm:"NOT NULL created" json:"created_at"`
+	UpdatedAt   time.Time `xorm:"NOT NULL updated" json:"updated_at"`
 }
 
 func (b *Board) TableName() string {

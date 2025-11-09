@@ -20,3 +20,13 @@ Content-Type: {{contentType}}
     "password": "password",
     "password_confirmation": "password"
 }
+
+###
+
+POST {{baseUrl}}/boards
+Content-Type: {{contentType}}
+
+{
+    "name": "lorem",
+    "description": "lorem ipsum dolor"
+}

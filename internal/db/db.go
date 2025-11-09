@@ -30,7 +30,7 @@ func NewDB(dbFlags *config.DBFlags) (*repository.Repository, error) {
 			return
 		}
 
-		engine.SetColumnMapper(names.GonicMapper{})
+		engine.SetMapper(names.GonicMapper{})
 
 		instanceErr = engine.Ping()
 		if instanceErr != nil {
