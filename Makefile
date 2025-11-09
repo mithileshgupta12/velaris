@@ -7,7 +7,7 @@ MIGRATIONS_DIR=internal/db/migrations
 
 DB_DSN=postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
 
-.PHONY: build run migrate-create migrate-up migrate-down generate-db
+.PHONY: build run migrate-create migrate-up migrate-down
 
 build:
 	@go build -o ./target/api ./cmd/api/main.go
@@ -38,11 +38,6 @@ migrate-up:
 migrate-down:
 	@echo "Running migrations..."
 	@goose -dir $(MIGRATIONS_DIR) postgres "$(DB_DSN)" down
-
-generate-db:
-	@echo "Generating db..."
-	@rm -rf ./internal/db/repository
-	@sqlc generate
 
 test:
 	@go test ./...
