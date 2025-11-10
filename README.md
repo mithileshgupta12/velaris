@@ -49,4 +49,6 @@ The API will be available at `http://localhost:3000` and frontend at `http://loc
 
 ## License
 
-MIT
+This project is licensed under the GNU Affero General Public License v3 (AGPL v3) - see the [LICENSE](LICENSE) file for details.
+
+For a quick summary: you can use, modify, and distribute this software freely, but any modifications made to a publicly accessible version must also be made available under the same license.
