@@ -6,8 +6,9 @@ type Board struct {
 	Id          int64     `json:"id"`
 	Name        string    `xorm:"NOT NULL" json:"name"`
 	Description *string   `xorm:"TEXT" json:"description"`
-	UserId      int64     `xorm:"INDEX" json:"user_id"`
+	UserId      int64     `xorm:"INDEX NOT NULL" json:"user_id"`
 	User        *User     `xorm:"-" json:"user"`
+	Lists       []*List   `xorm:"-" json:"lists"`
 	CreatedAt   time.Time `xorm:"NOT NULL created" json:"created_at"`
 	UpdatedAt   time.Time `xorm:"NOT NULL updated" json:"updated_at"`
 }
