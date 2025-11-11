@@ -2,9 +2,9 @@ package route
 
 import (
 	"github.com/go-chi/chi/v5"
-	"github.com/mithileshgupta12/velaris/internal/api/handler"
-	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
+	"github.com/mithileshgupta12/velaris/internal/handler"
+	"github.com/mithileshgupta12/velaris/internal/middleware"
 )
 
 func BoardRoutes(r *chi.Mux, boardRepository repository.BoardRepository, middlewares middleware.Middlewares) {

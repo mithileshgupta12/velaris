@@ -3,12 +3,12 @@ package main
 import (
 	"log/slog"
 
-	"github.com/mithileshgupta12/velaris/internal/api/middleware"
-	"github.com/mithileshgupta12/velaris/internal/api/route"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/config"
 	"github.com/mithileshgupta12/velaris/internal/db"
 	"github.com/mithileshgupta12/velaris/internal/helper"
+	"github.com/mithileshgupta12/velaris/internal/middleware"
+	"github.com/mithileshgupta12/velaris/internal/route"
 )
 
 func main() {

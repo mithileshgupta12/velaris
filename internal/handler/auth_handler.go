@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
+	"github.com/mithileshgupta12/velaris/internal/middleware"
 )
 
 type RegisterUserRequest struct {

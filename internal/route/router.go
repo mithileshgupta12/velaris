@@ -8,9 +8,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	chiMiddlewares "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
+	"github.com/mithileshgupta12/velaris/internal/middleware"
 )
 
 type Router struct {
