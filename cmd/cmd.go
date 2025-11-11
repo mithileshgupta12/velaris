@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"log/slog"
@@ -11,7 +11,7 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/route"
 )
 
-func main() {
+func Execute() {
 	cfg := config.NewConfig()
 
 	repositories, err := db.NewDB(&cfg.DB)
