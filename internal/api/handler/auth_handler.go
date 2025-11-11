@@ -44,7 +44,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var registerUserRequest RegisterUserRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&registerUserRequest); err != nil {
-		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
+		slog.Error("failed to decode request", slog.Any("err", err))
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}

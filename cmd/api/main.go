@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
@@ -17,14 +16,14 @@ func main() {
 
 	repositories, err := db.NewDB(&cfg.DB)
 	if err != nil {
-		helper.LogFatal(fmt.Sprintf("failed to connect to database: %v", err))
+		helper.LogFatal("failed to connect to database", "err", err)
 	}
 
 	slog.Info("Connection to database successful")
 
 	cache, err := cache.NewRedisClient()
 	if err != nil {
-		helper.LogFatal(fmt.Sprintf("failed to connect to cache: %v", err))
+		helper.LogFatal("failed to connect to cache", "err", err)
 	}
 
 	stores := cache.InitStores()
@@ -37,6 +36,6 @@ func main() {
 	r := route.NewRouter(cfg.App.FrontendUrl)
 	r.RegisterRoutes(repositories, stores, middlewares)
 	if err := r.Serve(cfg.App.Port); err != nil {
-		helper.LogFatal(fmt.Sprintf("failed to start server: %v", err))
+		helper.LogFatal("failed to start server", "err", err)
 	}
 }
