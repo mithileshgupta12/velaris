@@ -15,9 +15,9 @@ var (
 type BoardRepository interface {
 	GetAllBoardsByUserId(userId int64) ([]*models.Board, error)
 	CreateBoard(args *CreateBoardArgs) (*models.Board, error)
-	GetBoardByIdAndUserId(args *GetBoardByIdAndUserIdArgs) (*models.Board, error)
-	UpdateBoardByIdAndUserId(args *UpdateBoardByIdAndUserIdArgs) (*models.Board, error)
-	DeleteBoardByIdAndUserId(args *DeleteBoardByIdAndUserIdArgs) error
+	GetBoardById(args *GetBoardByIdArgs) (*models.Board, error)
+	UpdateBoardById(args *UpdateBoardByIdArgs) (*models.Board, error)
+	DeleteBoardById(args *DeleteBoardByIdArgs) error
 }
 
 type boardRepository struct {
@@ -67,17 +67,16 @@ func (br *boardRepository) CreateBoard(args *CreateBoardArgs) (*models.Board, er
 	return board, nil
 }
 
-type GetBoardByIdAndUserIdArgs struct {
-	Id     int64
-	UserId int64
+type GetBoardByIdArgs struct {
+	Id int64
 }
 
-func (br *boardRepository) GetBoardByIdAndUserId(args *GetBoardByIdAndUserIdArgs) (*models.Board, error) {
+func (br *boardRepository) GetBoardById(args *GetBoardByIdArgs) (*models.Board, error) {
 	board := new(models.Board)
 
 	has, err := br.engine.
 		Alias("b").
-		Where("b.id = ? AND b.user_id = ?", args.Id, args.UserId).
+		Where("b.id = ?", args.Id).
 		Get(board)
 	if err != nil {
 		return nil, err
@@ -89,14 +88,13 @@ func (br *boardRepository) GetBoardByIdAndUserId(args *GetBoardByIdAndUserIdArgs
 	return board, nil
 }
 
-type UpdateBoardByIdAndUserIdArgs struct {
+type UpdateBoardByIdArgs struct {
 	Id          int64
-	UserId      int64
 	Name        string
 	Description *string
 }
 
-func (br *boardRepository) UpdateBoardByIdAndUserId(args *UpdateBoardByIdAndUserIdArgs) (*models.Board, error) {
+func (br *boardRepository) UpdateBoardById(args *UpdateBoardByIdArgs) (*models.Board, error) {
 	board := &models.Board{
 		Name:        args.Name,
 		Description: args.Description,
@@ -104,7 +102,7 @@ func (br *boardRepository) UpdateBoardByIdAndUserId(args *UpdateBoardByIdAndUser
 
 	affected, err := br.engine.
 		Alias("b").
-		Where("b.id = ? AND b.user_id = ?", args.Id, args.UserId).
+		Where("b.id = ?", args.Id).
 		Update(board)
 	if err != nil {
 		return nil, err
@@ -116,15 +114,13 @@ func (br *boardRepository) UpdateBoardByIdAndUserId(args *UpdateBoardByIdAndUser
 	return board, nil
 }
 
-type DeleteBoardByIdAndUserIdArgs struct {
-	Id     int64
-	UserId int64
+type DeleteBoardByIdArgs struct {
+	Id int64
 }
 
-func (br *boardRepository) DeleteBoardByIdAndUserId(args *DeleteBoardByIdAndUserIdArgs) error {
+func (br *boardRepository) DeleteBoardById(args *DeleteBoardByIdArgs) error {
 	board := &models.Board{
-		Id:     args.Id,
-		UserId: args.UserId,
+		Id: args.Id,
 	}
 
 	affected, err := br.engine.

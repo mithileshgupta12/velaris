@@ -1,12 +1,19 @@
 package repository
 
 import (
+	"errors"
+
 	"github.com/mithileshgupta12/velaris/internal/db/models"
 	"xorm.io/xorm"
 )
 
+var (
+	ErrListNotFound = errors.New("list not found")
+)
+
 type ListRepository interface {
 	GetAllListsByBoardId(args *GetAllListsByBoardIdArgs) ([]*models.List, error)
+	DeleteListById(args *DeleteListByIdArgs) error
 }
 
 type listRepository struct {
@@ -33,4 +40,25 @@ func (lr *listRepository) GetAllListsByBoardId(args *GetAllListsByBoardIdArgs) (
 	}
 
 	return lists, nil
+}
+
+type DeleteListByIdArgs struct {
+	ListId int64
+}
+
+func (lr *listRepository) DeleteListById(args *DeleteListByIdArgs) error {
+	list := &models.List{
+		Id: args.ListId,
+	}
+
+	affected, err := lr.engine.
+		Delete(list)
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrListNotFound
+	}
+
+	return nil
 }

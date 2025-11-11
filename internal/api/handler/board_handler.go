@@ -104,11 +104,8 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
-
-	board, err := bh.boardRepository.GetBoardByIdAndUserId(&repository.GetBoardByIdAndUserIdArgs{
-		Id:     int64(id),
-		UserId: ctxUser.ID,
+	board, err := bh.boardRepository.GetBoardById(&repository.GetBoardByIdArgs{
+		Id: int64(id),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrBoardNotFound) {
@@ -159,12 +156,9 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
-
-	updateBoardByIdArgs := &repository.UpdateBoardByIdAndUserIdArgs{
-		Id:     int64(id),
-		UserId: ctxUser.ID,
-		Name:   updateBoardRequest.Name,
+	updateBoardByIdArgs := &repository.UpdateBoardByIdArgs{
+		Id:   int64(id),
+		Name: updateBoardRequest.Name,
 	}
 
 	if updateBoardRequest.Description == "" {
@@ -173,7 +167,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		updateBoardByIdArgs.Description = &updateBoardRequest.Description
 	}
 
-	board, err := bh.boardRepository.UpdateBoardByIdAndUserId(updateBoardByIdArgs)
+	board, err := bh.boardRepository.UpdateBoardById(updateBoardByIdArgs)
 	if err != nil {
 		if errors.Is(err, repository.ErrBoardNotFound) {
 			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
@@ -197,11 +191,8 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
-
-	err = bh.boardRepository.DeleteBoardByIdAndUserId(&repository.DeleteBoardByIdAndUserIdArgs{
-		Id:     int64(id),
-		UserId: ctxUser.ID,
+	err = bh.boardRepository.DeleteBoardById(&repository.DeleteBoardByIdArgs{
+		Id: int64(id),
 	})
 	if err != nil {
 		if errors.Is(err, repository.ErrBoardNotFound) {
