@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -10,15 +11,13 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
-	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type Router struct {
 	mux *chi.Mux
-	lgr logger.Logger
 }
 
-func NewRouter(lgr logger.Logger, frontendUrl string) *Router {
+func NewRouter(frontendUrl string) *Router {
 	mux := chi.NewRouter()
 
 	mux.Use(chiMiddlewares.RequestID)
@@ -36,17 +35,17 @@ func NewRouter(lgr logger.Logger, frontendUrl string) *Router {
 		MaxAge:           300,
 	}))
 
-	return &Router{mux, lgr}
+	return &Router{mux}
 }
 
 func (r *Router) RegisterRoutes(repositories *repository.Repository, stores *cache.Stores, middlewares middleware.Middlewares) {
-	BoardRoutes(r.mux, repositories.BoardRepository, r.lgr, middlewares)
-	AuthRoutes(r.mux, repositories.UserRepository, stores.SessionStore, r.lgr, middlewares)
+	BoardRoutes(r.mux, repositories.BoardRepository, middlewares)
+	AuthRoutes(r.mux, repositories.UserRepository, stores.SessionStore, middlewares)
 }
 
 func (r *Router) Serve(port int) error {
 	addr := fmt.Sprintf(":%d", port)
 
-	r.lgr.Log(logger.INFO, fmt.Sprintf("Server started on %s", addr), nil)
+	slog.Info(fmt.Sprintf("Server started on %s", addr))
 	return http.ListenAndServe(addr, r.mux)
 }

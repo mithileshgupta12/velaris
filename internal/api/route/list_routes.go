@@ -5,10 +5,9 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/api/handler"
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
-	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
-func ListRoutes(r *chi.Mux, boardRepository repository.BoardRepository, lgr logger.Logger, middlewares middleware.Middlewares) {
+func ListRoutes(r *chi.Mux, boardRepository repository.BoardRepository, middlewares middleware.Middlewares) {
 	listHandler := handler.NewListHandler()
 
 	r.Route("/boards/{boardId}/lists", func(r chi.Router) {

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"strings"
@@ -16,7 +17,6 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
-	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type RegisterUserRequest struct {
@@ -34,18 +34,17 @@ type LoginUserRequest struct {
 type AuthHandler struct {
 	userRepository repository.UserRepository
 	sessionStore   cache.SessionStore
-	lgr            logger.Logger
 }
 
-func NewAuthHandler(userRepository repository.UserRepository, sessionStore cache.SessionStore, lgr logger.Logger) *AuthHandler {
-	return &AuthHandler{userRepository, sessionStore, lgr}
+func NewAuthHandler(userRepository repository.UserRepository, sessionStore cache.SessionStore) *AuthHandler {
+	return &AuthHandler{userRepository, sessionStore}
 }
 
 func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var registerUserRequest RegisterUserRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&registerUserRequest); err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -110,7 +109,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := helper.HashPassword(registerUserRequest.Password)
 	if err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to hash password: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to hash password: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -126,7 +125,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to register user: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to register user: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -138,7 +137,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginUserRequest LoginUserRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&loginUserRequest); err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -172,9 +171,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get user by email: %v", err), []*logger.Field{
-			{Key: "user_email", Value: loginUserRequest.Email},
-		})
+		slog.Error(fmt.Sprintf("failed to get user by email: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -188,7 +185,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	sessionID := make([]byte, 32)
 	_, err = rand.Read(sessionID)
 	if err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create session ID: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to create session ID: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -196,7 +193,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	b64SessionID := base64.RawURLEncoding.EncodeToString(sessionID)
 
 	if err := ah.sessionStore.Set(r.Context(), b64SessionID, user.Id, time.Duration(time.Hour*24)); err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to set value in session store: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to set value in session store: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -218,13 +215,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("auth_session")
 	if err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get session cookie: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to get session cookie: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unautenticated")
 		return
 	}
 
 	if err := ah.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-		ah.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete record from session: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to delete record from session: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}

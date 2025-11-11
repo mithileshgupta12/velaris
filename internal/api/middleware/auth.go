@@ -3,12 +3,12 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/mithileshgupta12/velaris/internal/helper"
-	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type ctxUserKey string
@@ -46,13 +46,13 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-				m.lgr.Log(
-					logger.ERROR,
+				slog.Error(
 					fmt.Sprintf("failed to delete entry from session store: %v", err),
-					nil,
 				)
 			}
-			m.lgr.Log(logger.ERROR, fmt.Sprintf("failed to convert userId to int: %v", err), nil)
+			slog.Error(
+				fmt.Sprintf("failed to convert userId to int: %v", err),
+			)
 			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
@@ -61,10 +61,8 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-				m.lgr.Log(
-					logger.ERROR,
+				slog.Error(
 					fmt.Sprintf("failed to delete entry from session store: %v", err),
-					nil,
 				)
 			}
 			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")

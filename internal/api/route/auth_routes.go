@@ -6,17 +6,15 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/cache"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
-	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 func AuthRoutes(
 	r *chi.Mux,
 	userRepository repository.UserRepository,
 	sessionStore cache.SessionStore,
-	lgr logger.Logger,
 	middlewares middleware.Middlewares,
 ) {
-	authHandler := handler.NewAuthHandler(userRepository, sessionStore, lgr)
+	authHandler := handler.NewAuthHandler(userRepository, sessionStore)
 
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/register", authHandler.Register)

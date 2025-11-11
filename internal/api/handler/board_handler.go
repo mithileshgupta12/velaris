@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,7 +13,6 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/api/middleware"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
-	"github.com/mithileshgupta12/velaris/internal/pkg/logger"
 )
 
 type CreateBoardRequest struct {
@@ -27,11 +27,10 @@ type UpdateBoardRequest struct {
 
 type BoardHandler struct {
 	boardRepository repository.BoardRepository
-	lgr             logger.Logger
 }
 
-func NewBoardHandler(boardRepository repository.BoardRepository, lgr logger.Logger) *BoardHandler {
-	return &BoardHandler{boardRepository, lgr}
+func NewBoardHandler(boardRepository repository.BoardRepository) *BoardHandler {
+	return &BoardHandler{boardRepository}
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
@@ -39,7 +38,7 @@ func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 	boards, err := bh.boardRepository.GetAllBoardsByUserId(ctxUser.ID)
 	if err != nil {
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get boards: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to get boards: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -51,7 +50,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var createBoardRequest CreateBoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&createBoardRequest); err != nil {
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -89,7 +88,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 
 	board, err := bh.boardRepository.CreateBoard(createBoardArgs)
 	if err != nil {
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to create board: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to create board: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -118,9 +117,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to get board by ID: %v", err), []*logger.Field{
-			{Key: "board_id", Value: id},
-		})
+		slog.Error(fmt.Sprintf("failed to get board by ID: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -140,7 +137,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var updateBoardRequest UpdateBoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&updateBoardRequest); err != nil {
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to decode request: %v", err), nil)
+		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -184,9 +181,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to update board: %v", err), []*logger.Field{
-			{Key: "board_id", Value: id},
-		})
+		slog.Error(fmt.Sprintf("failed to update board: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -215,9 +210,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		bh.lgr.Log(logger.ERROR, fmt.Sprintf("failed to delete board: %v", err), []*logger.Field{
-			{Key: "board_id", Value: id},
-		})
+		slog.Error(fmt.Sprintf("failed to delete board: %v", err))
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
