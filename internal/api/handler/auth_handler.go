@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/mail"
@@ -44,7 +43,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var registerUserRequest RegisterUserRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&registerUserRequest); err != nil {
-		slog.Error("failed to decode request", slog.Any("err", err))
+		slog.Error("failed to decode request", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -109,7 +108,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := helper.HashPassword(registerUserRequest.Password)
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to hash password: %v", err))
+		slog.Error("failed to hash password", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -125,7 +124,7 @@ func (ah *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		slog.Error(fmt.Sprintf("failed to register user: %v", err))
+		slog.Error("failed to register user", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -137,7 +136,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginUserRequest LoginUserRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&loginUserRequest); err != nil {
-		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
+		slog.Error("failed to decode request", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -171,7 +170,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		slog.Error(fmt.Sprintf("failed to get user by email: %v", err))
+		slog.Error("failed to get user by email", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -185,7 +184,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	sessionID := make([]byte, 32)
 	_, err = rand.Read(sessionID)
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to create session ID: %v", err))
+		slog.Error("failed to create session ID", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -193,7 +192,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	b64SessionID := base64.RawURLEncoding.EncodeToString(sessionID)
 
 	if err := ah.sessionStore.Set(r.Context(), b64SessionID, user.Id, time.Duration(time.Hour*24)); err != nil {
-		slog.Error(fmt.Sprintf("failed to set value in session store: %v", err))
+		slog.Error("failed to set value in session store", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -215,13 +214,13 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (ah *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sessionCookie, err := r.Cookie("auth_session")
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to get session cookie: %v", err))
+		slog.Error("failed to get session cookie", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusUnauthorized, "Unautenticated")
 		return
 	}
 
 	if err := ah.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-		slog.Error(fmt.Sprintf("failed to delete record from session: %v", err))
+		slog.Error("failed to delete record from session", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}

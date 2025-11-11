@@ -46,6 +46,6 @@ func (r *Router) RegisterRoutes(repositories *repository.Repository, stores *cac
 func (r *Router) Serve(port int) error {
 	addr := fmt.Sprintf(":%d", port)
 
-	slog.Info(fmt.Sprintf("Server started on %s", addr))
+	slog.Info("Server started", "address", addr)
 	return http.ListenAndServe(addr, r.mux)
 }

@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -46,13 +45,9 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-				slog.Error(
-					fmt.Sprintf("failed to delete entry from session store: %v", err),
-				)
+				slog.Error("failed to delete entry from session store", "err", err)
 			}
-			slog.Error(
-				fmt.Sprintf("failed to convert userId to int: %v", err),
-			)
+			slog.Error("failed to convert userId to int", "err", err)
 			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return
 		}
@@ -61,9 +56,7 @@ func (m *middlewares) AuthMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			helper.SetCookie(w, AuthCookieName, "", -1, isSecure)
 			if err := m.sessionStore.Del(r.Context(), sessionCookie.Value); err != nil {
-				slog.Error(
-					fmt.Sprintf("failed to delete entry from session store: %v", err),
-				)
+				slog.Error("failed to delete entry from session store", "err", err)
 			}
 			helper.ErrorJsonResponse(w, http.StatusUnauthorized, "unauthenticated")
 			return

@@ -2,7 +2,7 @@ package cache
 
 import (
 	"context"
-	"log"
+	"log/slog"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -40,6 +40,6 @@ func (rc *RedisClient) InitStores() *Stores {
 func (rc *RedisClient) Close() {
 	err := rc.client.Close()
 	if err != nil {
-		log.Printf("failed to close redis connection: %v", err)
+		slog.Error("failed to close redis connection", "err", err)
 	}
 }

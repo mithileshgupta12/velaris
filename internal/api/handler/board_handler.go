@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -38,7 +37,7 @@ func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 
 	boards, err := bh.boardRepository.GetAllBoardsByUserId(ctxUser.ID)
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to get boards: %v", err))
+		slog.Error("failed to get boards", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -50,7 +49,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 	var createBoardRequest CreateBoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&createBoardRequest); err != nil {
-		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
+		slog.Error("failed to decode request", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -88,7 +87,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 
 	board, err := bh.boardRepository.CreateBoard(createBoardArgs)
 	if err != nil {
-		slog.Error(fmt.Sprintf("failed to create board: %v", err))
+		slog.Error("failed to create board", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -117,7 +116,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		slog.Error(fmt.Sprintf("failed to get board by ID: %v", err))
+		slog.Error("failed to get board by ID", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -137,7 +136,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	var updateBoardRequest UpdateBoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&updateBoardRequest); err != nil {
-		slog.Error(fmt.Sprintf("failed to decode request: %v", err))
+		slog.Error("failed to decode request", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid request")
 		return
 	}
@@ -181,7 +180,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		slog.Error(fmt.Sprintf("failed to update board: %v", err))
+		slog.Error("failed to update board", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -210,7 +209,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		slog.Error(fmt.Sprintf("failed to delete board: %v", err))
+		slog.Error("failed to delete board", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
