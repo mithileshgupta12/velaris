@@ -7,8 +7,8 @@ import (
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 )
 
-func ListRoutes(r *chi.Mux, boardRepository repository.BoardRepository, middlewares middleware.Middlewares) {
-	listHandler := handler.NewListHandler()
+func ListRoutes(r *chi.Mux, listRepository repository.ListRepository, middlewares middleware.Middlewares) {
+	listHandler := handler.NewListHandler(listRepository)
 
 	r.Route("/boards/{boardId}/lists", func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware)
