@@ -10,10 +10,10 @@ DB_DSN=postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)
 .PHONY: build run migrate-create migrate-up migrate-down test lint
 
 build:
-	@go build -o ./target/api ./cmd/api/main.go
+	@go build -o ./target/main ./main.go
 
 run: build
-	@./target/api \
+	@./target/main \
 		-app-port=$(APP_PORT) \
 		-frontend-url=$(FRONTEND_URL) \
 		-db-host=$(DB_HOST) \
