@@ -14,7 +14,7 @@ import (
 func Execute() {
 	cfg := config.NewConfig()
 
-	repositories, err := db.NewDB(&cfg.DB)
+	repositories, policies, err := db.NewDB(&cfg.DB)
 	if err != nil {
 		helper.LogFatal("failed to connect to database", "err", err)
 	}
@@ -34,7 +34,7 @@ func Execute() {
 	middlewares := middleware.NewMiddlewares(repositories, stores.SessionStore)
 
 	r := route.NewRouter(cfg.App.FrontendUrl)
-	r.RegisterRoutes(repositories, stores, middlewares)
+	r.RegisterRoutes(repositories, policies, stores, middlewares)
 	if err := r.Serve(cfg.App.Port); err != nil {
 		helper.LogFatal("failed to start server", "err", err)
 	}

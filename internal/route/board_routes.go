@@ -2,13 +2,19 @@ package route
 
 import (
 	"github.com/go-chi/chi/v5"
+	"github.com/mithileshgupta12/velaris/internal/db/policy"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/handler"
 	"github.com/mithileshgupta12/velaris/internal/middleware"
 )
 
-func BoardRoutes(r *chi.Mux, boardRepository repository.BoardRepository, middlewares middleware.Middlewares) {
-	boardHandler := handler.NewBoardHandler(boardRepository)
+func BoardRoutes(
+	r *chi.Mux,
+	boardRepository repository.BoardRepository,
+	boardPolicy policy.Policy,
+	middlewares middleware.Middlewares,
+) {
+	boardHandler := handler.NewBoardHandler(boardRepository, boardPolicy)
 
 	r.Route("/boards", func(r chi.Router) {
 		r.Use(middlewares.AuthMiddleware)

@@ -9,6 +9,7 @@ import (
 	chiMiddlewares "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/mithileshgupta12/velaris/internal/cache"
+	"github.com/mithileshgupta12/velaris/internal/db/policy"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/middleware"
 )
@@ -38,8 +39,13 @@ func NewRouter(frontendUrl string) *Router {
 	return &Router{mux}
 }
 
-func (r *Router) RegisterRoutes(repositories *repository.Repository, stores *cache.Stores, middlewares middleware.Middlewares) {
-	BoardRoutes(r.mux, repositories.BoardRepository, middlewares)
+func (r *Router) RegisterRoutes(
+	repositories *repository.Repository,
+	policies *policy.Policies,
+	stores *cache.Stores,
+	middlewares middleware.Middlewares,
+) {
+	BoardRoutes(r.mux, repositories.BoardRepository, policies.BoardPolicy, middlewares)
 	AuthRoutes(r.mux, repositories.UserRepository, stores.SessionStore, middlewares)
 }
 

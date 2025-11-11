@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/mithileshgupta12/velaris/internal/db/policy"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/middleware"
@@ -26,10 +27,11 @@ type UpdateBoardRequest struct {
 
 type BoardHandler struct {
 	boardRepository repository.BoardRepository
+	boardPolicy     policy.Policy
 }
 
-func NewBoardHandler(boardRepository repository.BoardRepository) *BoardHandler {
-	return &BoardHandler{boardRepository}
+func NewBoardHandler(boardRepository repository.BoardRepository, boardPolicy policy.Policy) *BoardHandler {
+	return &BoardHandler{boardRepository, boardPolicy}
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
@@ -188,6 +190,13 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idParam)
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
+		return
+	}
+
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	if canDelete := bh.boardPolicy.CanDelete(ctxUser, int64(id)); !canDelete {
+		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
 		return
 	}
 
