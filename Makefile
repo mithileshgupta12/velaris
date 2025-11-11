@@ -7,7 +7,7 @@ MIGRATIONS_DIR=internal/db/migrations
 
 DB_DSN=postgres://$(DB_USERNAME):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSLMODE)
 
-.PHONY: build run migrate-create migrate-up migrate-down
+.PHONY: build run migrate-create migrate-up migrate-down test lint
 
 build:
 	@go build -o ./target/api ./cmd/api/main.go
@@ -41,3 +41,6 @@ migrate-down:
 
 test:
 	@go test ./...
+
+lint:
+	@golangci-lint run
