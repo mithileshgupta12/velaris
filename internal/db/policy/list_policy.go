@@ -1,9 +1,13 @@
 package policy
 
-type ListPolicy interface{}
+import "github.com/mithileshgupta12/velaris/internal/middleware"
 
 type listPolicy struct{}
 
-func NewListPolicy() ListPolicy {
+func NewListPolicy() Policy {
 	return &listPolicy{}
+}
+
+func (lp *listPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) bool {
+	return true
 }
