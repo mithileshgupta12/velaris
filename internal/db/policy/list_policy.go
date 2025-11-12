@@ -8,6 +8,6 @@ func NewListPolicy() Policy {
 	return &listPolicy{}
 }
 
-func (lp *listPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) bool {
-	return true
+func (lp *listPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	return true, nil
 }
