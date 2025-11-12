@@ -2,24 +2,18 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/mithileshgupta12/velaris/internal/db/policy"
 	"github.com/mithileshgupta12/velaris/internal/db/repository"
 	"github.com/mithileshgupta12/velaris/internal/helper"
 	"github.com/mithileshgupta12/velaris/internal/middleware"
 )
 
-type CreateBoardRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
-type UpdateBoardRequest struct {
+type BoardRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -31,6 +25,25 @@ type BoardHandler struct {
 
 func NewBoardHandler(boardRepository repository.BoardRepository, boardPolicy policy.Policy) *BoardHandler {
 	return &BoardHandler{boardRepository, boardPolicy}
+}
+
+func (bh *BoardHandler) validateBoardData(name, description string) error {
+	name = strings.TrimSpace(name)
+	description = strings.TrimSpace(description)
+
+	if name == "" {
+		return errors.New("name is a required field")
+	}
+
+	if len(name) > 255 {
+		return errors.New("name must not be more than 255 characters long")
+	}
+
+	if len(description) > 10000 {
+		return errors.New("description must not be more than 10,000 characters long")
+	}
+
+	return nil
 }
 
 func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
@@ -47,7 +60,7 @@ func (bh *BoardHandler) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
-	var createBoardRequest CreateBoardRequest
+	var createBoardRequest BoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&createBoardRequest); err != nil {
 		slog.Error("failed to decode request", "err", err)
@@ -55,21 +68,9 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createBoardRequest.Name = strings.TrimSpace(createBoardRequest.Name)
-	createBoardRequest.Description = strings.TrimSpace(createBoardRequest.Description)
-
-	if createBoardRequest.Name == "" {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name is a required field")
-		return
-	}
-
-	if len(createBoardRequest.Name) > 255 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name must not be more than 255 characters long")
-		return
-	}
-
-	if len(createBoardRequest.Description) > 10000 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "description must not be more than 10,000 characters long")
+	err := bh.validateBoardData(createBoardRequest.Name, createBoardRequest.Description)
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -97,9 +98,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "id")
-
-	id, err := strconv.Atoi(idParam)
+	id, err := helper.ParseID(r)
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
@@ -131,9 +130,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "id")
-
-	id, err := strconv.Atoi(idParam)
+	id, err := helper.ParseID(r)
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
@@ -152,7 +149,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var updateBoardRequest UpdateBoardRequest
+	var updateBoardRequest BoardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&updateBoardRequest); err != nil {
 		slog.Error("failed to decode request", "err", err)
@@ -160,21 +157,9 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updateBoardRequest.Name = strings.TrimSpace(updateBoardRequest.Name)
-	updateBoardRequest.Description = strings.TrimSpace(updateBoardRequest.Description)
-
-	if updateBoardRequest.Name == "" {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name is a required field")
-		return
-	}
-
-	if len(updateBoardRequest.Name) > 255 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "name must not be more than 255 characters long")
-		return
-	}
-
-	if len(updateBoardRequest.Description) > 10000 {
-		helper.ErrorJsonResponse(w, http.StatusBadRequest, "description must not be more than 10,000 characters long")
+	err = bh.validateBoardData(updateBoardRequest.Name, updateBoardRequest.Description)
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -200,9 +185,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
-	idParam := chi.URLParam(r, "id")
-
-	id, err := strconv.Atoi(idParam)
+	id, err := helper.ParseID(r)
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
