@@ -6,6 +6,9 @@ import (
 )
 
 type Policy interface {
+	CanView(ctxUser middleware.CtxUser, id int64) (bool, error)
+	CanCreate(ctxUser middleware.CtxUser, id int64) (bool, error)
+	CanUpdate(ctxUser middleware.CtxUser, id int64) (bool, error)
 	CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error)
 }
 

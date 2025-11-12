@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -106,15 +105,23 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	canView, err := bh.boardPolicy.CanView(ctxUser, int64(id))
+	if err != nil {
+		slog.Error("failed to check board view permission", "err", err)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	if !canView {
+		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
+		return
+	}
+
 	board, err := bh.boardRepository.GetBoardById(&repository.GetBoardByIdArgs{
 		Id: int64(id),
 	})
 	if err != nil {
-		if errors.Is(err, repository.ErrBoardNotFound) {
-			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
-			return
-		}
-
 		slog.Error("failed to get board by ID", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -129,6 +136,19 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idParam)
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
+		return
+	}
+
+	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
+
+	canUpdate, err := bh.boardPolicy.CanUpdate(ctxUser, int64(id))
+	if err != nil {
+		slog.Error("failed to check board update permission", "err", err)
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	if !canUpdate {
+		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
 		return
 	}
 
@@ -171,11 +191,6 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 
 	board, err := bh.boardRepository.UpdateBoardById(updateBoardByIdArgs)
 	if err != nil {
-		if errors.Is(err, repository.ErrBoardNotFound) {
-			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
-			return
-		}
-
 		slog.Error("failed to update board", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return
@@ -209,11 +224,6 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		Id: int64(id),
 	})
 	if err != nil {
-		if errors.Is(err, repository.ErrBoardNotFound) {
-			helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
-			return
-		}
-
 		slog.Error("failed to delete board", "err", err)
 		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
 		return

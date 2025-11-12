@@ -13,9 +13,8 @@ func NewBoardPolicy(engine *xorm.Engine) Policy {
 	return &boardPolicy{engine}
 }
 
-func (bp *boardPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error) {
+func (bp *boardPolicy) userOwnsBoard(ctxUser middleware.CtxUser, id int64) (bool, error) {
 	exists, err := bp.engine.
-		Alias("b").
 		Where("id = ? AND user_id = ?", id, ctxUser.ID).
 		Exist()
 	if err != nil {
@@ -26,4 +25,18 @@ func (bp *boardPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) (bool, er
 	}
 
 	return true, nil
+}
+
+func (bp *boardPolicy) CanView(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	return bp.userOwnsBoard(ctxUser, id)
+}
+func (bp *boardPolicy) CanCreate(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	return true, nil
+}
+func (bp *boardPolicy) CanUpdate(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	return bp.userOwnsBoard(ctxUser, id)
+}
+
+func (bp *boardPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	return bp.userOwnsBoard(ctxUser, id)
 }
