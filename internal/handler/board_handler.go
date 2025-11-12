@@ -195,7 +195,12 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 
 	ctxUser := r.Context().Value(middleware.CtxUserKey).(middleware.CtxUser)
 
-	if canDelete := bh.boardPolicy.CanDelete(ctxUser, int64(id)); !canDelete {
+	canDelete, err := bh.boardPolicy.CanDelete(ctxUser, int64(id))
+	if err != nil {
+		helper.ErrorJsonResponse(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+	if !canDelete {
 		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
 		return
 	}

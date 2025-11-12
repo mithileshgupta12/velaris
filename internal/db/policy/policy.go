@@ -6,7 +6,7 @@ import (
 )
 
 type Policy interface {
-	CanDelete(ctxUser middleware.CtxUser, id int64) bool
+	CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error)
 }
 
 type Policies struct {

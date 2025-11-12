@@ -13,6 +13,17 @@ func NewBoardPolicy(engine *xorm.Engine) Policy {
 	return &boardPolicy{engine}
 }
 
-func (bp *boardPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) bool {
-	return true
+func (bp *boardPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	exists, err := bp.engine.
+		Alias("b").
+		Where("id = ? AND user_id = ?", id, ctxUser.ID).
+		Exist()
+	if err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, nil
+	}
+
+	return true, nil
 }
