@@ -1,11 +1,16 @@
 package policy
 
-import "github.com/mithileshgupta12/velaris/internal/middleware"
+import (
+	"github.com/mithileshgupta12/velaris/internal/middleware"
+	"xorm.io/xorm"
+)
 
-type listPolicy struct{}
+type listPolicy struct {
+	engine *xorm.Engine
+}
 
-func NewListPolicy() Policy {
-	return &listPolicy{}
+func NewListPolicy(engine *xorm.Engine) Policy {
+	return &listPolicy{engine}
 }
 
 func (lp *listPolicy) CanView(ctxUser middleware.CtxUser, id int64) (bool, error) {

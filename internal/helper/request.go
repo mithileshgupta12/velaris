@@ -7,11 +7,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func ParseID(r *http.Request) (int64, error) {
-	idParam := chi.URLParam(r, "id")
+func ParseIntURLParam(r *http.Request, urlParam string) (int64, error) {
+	param := chi.URLParam(r, urlParam)
 
-	id, err := strconv.Atoi(idParam)
-	if err != nil || id < 1 {
+	id, err := strconv.Atoi(param)
+	if err != nil {
 		return 0, err
 	}
 

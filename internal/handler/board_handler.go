@@ -98,7 +98,7 @@ func (bh *BoardHandler) Store(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
-	id, err := helper.ParseID(r)
+	id, err := helper.ParseIntURLParam(r, "id")
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
@@ -113,7 +113,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !canView {
-		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
+		helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
 		return
 	}
 
@@ -130,7 +130,7 @@ func (bh *BoardHandler) Show(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
-	id, err := helper.ParseID(r)
+	id, err := helper.ParseIntURLParam(r, "id")
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
@@ -145,7 +145,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !canUpdate {
-		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
+		helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
 		return
 	}
 
@@ -185,7 +185,7 @@ func (bh *BoardHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
-	id, err := helper.ParseID(r)
+	id, err := helper.ParseIntURLParam(r, "id")
 	if err != nil || id < 1 {
 		helper.ErrorJsonResponse(w, http.StatusBadRequest, "invalid board id")
 		return
@@ -199,7 +199,7 @@ func (bh *BoardHandler) Destroy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !canDelete {
-		helper.ErrorJsonResponse(w, http.StatusForbidden, "unauthorized")
+		helper.ErrorJsonResponse(w, http.StatusNotFound, "board not found")
 		return
 	}
 

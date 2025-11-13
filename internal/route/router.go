@@ -45,8 +45,25 @@ func (r *Router) RegisterRoutes(
 	stores *cache.Stores,
 	middlewares middleware.Middlewares,
 ) {
-	BoardRoutes(r.mux, repositories.BoardRepository, policies.BoardPolicy, middlewares)
-	AuthRoutes(r.mux, repositories.UserRepository, stores.SessionStore, middlewares)
+	BoardRoutes(
+		r.mux,
+		repositories.BoardRepository,
+		policies.BoardPolicy,
+		middlewares,
+	)
+	AuthRoutes(
+		r.mux,
+		repositories.UserRepository,
+		stores.SessionStore,
+		middlewares,
+	)
+	ListRoutes(
+		r.mux,
+		repositories.ListRepository,
+		policies.BoardPolicy,
+		policies.ListPolicy,
+		middlewares,
+	)
 }
 
 func (r *Router) Serve(port int) error {

@@ -14,10 +14,12 @@ type Policy interface {
 
 type Policies struct {
 	BoardPolicy Policy
+	ListPolicy  Policy
 }
 
 func InitPolicies(engine *xorm.Engine) *Policies {
 	return &Policies{
 		BoardPolicy: NewBoardPolicy(engine),
+		ListPolicy:  NewListPolicy(engine),
 	}
 }
