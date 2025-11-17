@@ -14,6 +14,19 @@ func NewListPolicy(engine *xorm.Engine) Policy {
 }
 
 func (lp *listPolicy) CanView(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	exists, err := lp.engine.
+		Alias("l").
+		Where("l.id = ?", id).
+		Join("INNER", "boards b", "b.id = l.board_id").
+		Where("b.user_id = ?", ctxUser.ID).
+		Exist()
+	if err != nil {
+		return false, err
+	}
+	if !exists {
+		return false, nil
+	}
+
 	return true, nil
 }
 
