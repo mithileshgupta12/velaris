@@ -13,7 +13,7 @@ func NewListPolicy(engine *xorm.Engine) Policy {
 	return &listPolicy{engine}
 }
 
-func (lp *listPolicy) CanView(ctxUser middleware.CtxUser, id int64) (bool, error) {
+func (lp *listPolicy) userOwnsList(ctxUser middleware.CtxUser, id int64) (bool, error) {
 	exists, err := lp.engine.
 		Alias("l").
 		Where("l.id = ?", id).
@@ -30,14 +30,18 @@ func (lp *listPolicy) CanView(ctxUser middleware.CtxUser, id int64) (bool, error
 	return true, nil
 }
 
+func (lp *listPolicy) CanView(ctxUser middleware.CtxUser, id int64) (bool, error) {
+	return lp.userOwnsList(ctxUser, id)
+}
+
 func (lp *listPolicy) CanCreate(ctxUser middleware.CtxUser, id int64) (bool, error) {
 	return true, nil
 }
 
 func (lp *listPolicy) CanUpdate(ctxUser middleware.CtxUser, id int64) (bool, error) {
-	return true, nil
+	return lp.userOwnsList(ctxUser, id)
 }
 
 func (lp *listPolicy) CanDelete(ctxUser middleware.CtxUser, id int64) (bool, error) {
-	return true, nil
+	return lp.userOwnsList(ctxUser, id)
 }
